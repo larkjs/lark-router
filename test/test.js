@@ -1,7 +1,7 @@
 /**
  * Created by mdemo on 14/11/13.
  */
-var app = require('./app');
+var app = require('../example/app');
 var request = require('supertest').agent(app.listen());
 
 describe('index', function(){

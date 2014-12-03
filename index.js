@@ -8,7 +8,11 @@ var fs = require('fs');
 var caller = require('caller');
 var dirname = path.dirname(caller());
 
-
+/**
+ * add bootstrap
+ * @param options {optional}
+ * @returns {Function|*|exports}
+ */
 var bootstrap = function (options) {
   var files = [];
   var routers = [];
