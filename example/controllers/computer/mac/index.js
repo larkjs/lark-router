@@ -4,6 +4,7 @@
 module.exports = function(router){
   router.get('/', function *(){
     this.body = 'Hello MAC';
+    yield next;
   });
   return router;
 };

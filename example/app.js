@@ -5,6 +5,8 @@ var koa = require('koa');
 var bootstrap = require('..');
 var app = module.exports = koa();
 
+
+
 app.use(bootstrap({directory:'example/controllers'}));
 app.use(bootstrap({directory:'example/controllers'}));
 app.use(function*(next){
