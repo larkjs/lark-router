@@ -5,8 +5,10 @@ var Router = require('koa-router');
 var mount = require('koa-mount');
 var compose = require('koa-compose');
 var fs = require('fs');
-var dirname = require('app-root-path').toString();
 
+
+var dirname = require('app-root-path').toString();
+var used = false;
 
 /**
  * add bootstrap
@@ -14,6 +16,10 @@ var dirname = require('app-root-path').toString();
  * @returns {Function|*|exports}
  */
 var bootstrap = function (options) {
+  if (used) return function*(next) {
+    yield next
+  };
+  used = true;
   var files = [];
   var routers = [];
   options = options || {};
@@ -37,6 +43,7 @@ var bootstrap = function (options) {
     var router = require(file.dirname)(new Router());
     routers.push(mount(route, router.middleware()));
   });
+  this.larkBootstrap = true;
   return compose(routers);
 };
 
