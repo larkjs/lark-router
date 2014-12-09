@@ -1,6 +1,6 @@
 {
   "name": "lark-koa-bootstrap",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "koa bootstrap for larkjs",
   "main": "index.js",
   "scripts": {
