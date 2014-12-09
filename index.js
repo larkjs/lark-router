@@ -5,8 +5,8 @@ var Router = require('koa-router');
 var mount = require('koa-mount');
 var compose = require('koa-compose');
 var fs = require('fs');
-var caller = require('caller');
-var dirname = path.dirname(caller());
+var dirname = require('app-root-path').toString();
+
 
 /**
  * add bootstrap
