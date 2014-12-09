@@ -1,14 +1,14 @@
 {
-  "name": "lark-koa-bootstrap",
+  "name": "lark-bootstrap",
   "version": "0.1.2",
-  "description": "koa bootstrap for larkjs",
+  "description": "bootstrap for larkjs",
   "main": "index.js",
   "scripts": {
     "test": "NODE_ENV=test ./node_modules/.bin/mocha --harmony-generators --require should test/test"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/larkjs/lark-koa-bootstrap"
+    "url": "https://github.com/larkjs/lark-bootstrap"
   },
   "keywords": [
     "bootstrap",
@@ -17,9 +17,9 @@
   "author": "mdemo",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/larkjs/lark-koa-bootstrap/issues"
+    "url": "https://github.com/larkjs/lark-bootstrap/issues"
   },
-  "homepage": "https://github.com/larkjs/lark-koa-bootstrap",
+  "homepage": "https://github.com/larkjs/lark-bootstrap",
   "dependencies": {
     "app-root-path": "^1.0.0",
     "koa-compose": "~2.3.0",

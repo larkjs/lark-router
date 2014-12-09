@@ -1,4 +1,4 @@
-lark-koa-bootstrap
+lark-bootstrap
 =============
 
 A bootstrap koa middleware for [lark.js](https://github.com/larkjs/lark). 
@@ -9,7 +9,7 @@ A bootstrap koa middleware for [lark.js](https://github.com/larkjs/lark).
 ## Installation
 
 ```
-$ npm install lark-koa-bootstrap
+$ npm install lark-bootstrap
 ```
 
 ### API
@@ -17,7 +17,7 @@ $ npm install lark-koa-bootstrap
 
 ```javascript
 var koa = require('koa');
-var bootstrap = require('lark-koa-bootstrap');
+var bootstrap = require('lark-bootstrap');
 var app = koa();
 
 app.use(bootstrap({directory:'controllers'}));
@@ -30,7 +30,7 @@ app.listen(3002);
 
 #### directory
 The `directory` configuration option (optional) is the path to a directory.
-Specify a directory to have lark-koa-bootstrap scan all files recursively to find files
+Specify a directory to have lark-bootstrap scan all files recursively to find files
 that match the controller-spec API. With this API, the directory structure
 dictates the paths at which handlers will be mounted.
 
@@ -63,5 +63,5 @@ Routes are now:
 /product
 ```
   
-[npm-image]: https://img.shields.io/npm/v/lark-koa-bootstrap.svg?style=flat-square
-[npm-url]: https://npmjs.org/package/lark-koa-bootstrap
+[npm-image]: https://img.shields.io/npm/v/lark-bootstrap.svg?style=flat-square
+[npm-url]: https://npmjs.org/package/lark-bootstrap
