@@ -64,5 +64,5 @@ Routes are now:
 /product
 ```
   
-[npm-image]: https://img.shields.io/npm/v/lark-bootstrap.svg?style=flat-square
-[npm-url]: https://npmjs.org/package/lark-bootstrap
+[npm-image]: https://img.shields.io/npm/v/lark-router.svg?style=flat-square
+[npm-url]: https://npmjs.org/package/lark-router
