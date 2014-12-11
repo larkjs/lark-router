@@ -8,9 +8,9 @@ var app = module.exports = koa();
 
 
 app.use(bootstrap({directory:'example/controllers'}));
-app.use(bootstrap({directory:'example/controllers'}));
 app.use(function*(next){
   console.log(123);
   yield  next;
 });
+app.use(bootstrap({directory:'example/controllers'}));
 app.listen(3002);
