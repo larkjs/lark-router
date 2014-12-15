@@ -67,5 +67,5 @@ Routes are now:
   
 [npm-image]: https://img.shields.io/npm/v/lark-router.svg?style=flat-square
 [npm-url]: https://npmjs.org/package/lark-router
-[travis-image]: https://img.shields.io/travis/larkjs/lark/master.svg?style=flat-square
-[travis-url]: https://travis-ci.org/larkjs/lark
+[travis-image]: https://img.shields.io/travis/larkjs/lark-router/master.svg?style=flat-square
+[travis-url]: https://travis-ci.org/larkjs/lark-router
