@@ -1,4 +1,4 @@
-koa-enrouten
+lark-router
 =============
 
 Route configuration middleware for koajs.
@@ -10,18 +10,18 @@ Route configuration middleware for koajs.
 ## Installation
 
 ```
-$ npm install koa-enrouten
+$ npm install lark-router
 ```
 
 ### API
-#### `app.use(enrouten(options))`
+#### `app.use(router(options))`
 
 ```javascript
 var koa = require('koa');
-var enrouten = require('koa-enrouten');
+var router = require('lark-router');
 var app = koa();
 
-app.use(enrouten({directory:'controllers'}));
+app.use(router({directory:'controllers'}));
 
 app.listen(3002);
 ```
@@ -31,7 +31,7 @@ app.listen(3002);
 
 #### directory
 The `directory` configuration option (optional) is the path to a directory.
-Specify a directory to have enrouten scan all files recursively to find files
+Specify a directory to have lark-router scan all files recursively to find files
 that match the controller-spec API. With this API, the directory structure
 dictates the paths at which handlers will be mounted.
 
@@ -72,7 +72,7 @@ npm test
 ```
   
   
-[npm-image]: https://img.shields.io/npm/v/koa-enrouten.svg?style=flat-square
-[npm-url]: https://npmjs.org/package/koa-enrouten
-[travis-image]: https://img.shields.io/travis/larkjs/koa-enrouten/master.svg?style=flat-square
-[travis-url]: https://travis-ci.org/larkjs/koa-enrouten
+[npm-image]: https://img.shields.io/npm/v/lark-router.svg?style=flat-square
+[npm-url]: https://npmjs.org/package/lark-router
+[travis-image]: https://img.shields.io/travis/larkjs/lark-router/master.svg?style=flat-square
+[travis-url]: https://travis-ci.org/larkjs/lark-router
