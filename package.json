@@ -1,14 +1,14 @@
 {
-  "name": "lark-router",
+  "name": "koa-enrouten",
   "version": "0.1.0",
-  "description": "A router middleware for lark.js",
+  "description": "An koa route initialization and configuration module.",
   "main": "index.js",
   "scripts": {
     "test": "NODE_ENV=test ./node_modules/.bin/mocha --harmony-generators --require should test/test"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/larkjs/lark-router"
+    "url": "https://github.com/larkjs/koa-enrouten"
   },
   "keywords": [
     "bootstrap",
@@ -17,9 +17,9 @@
   "author": "mdemo",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/larkjs/lark-router/issues"
+    "url": "https://github.com/larkjs/koa-enrouten/issues"
   },
-  "homepage": "https://github.com/larkjs/lark-router",
+  "homepage": "https://github.com/larkjs/koa-enrouten",
   "dependencies": {
     "app-root-path": "^1.0.0",
     "koa-compose": "~2.3.0",
