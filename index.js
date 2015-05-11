@@ -39,6 +39,9 @@ var bootstrap = function (options) {
       file.basename = file.basename.substring(0, file.basename.length - 3)
       file.dirname = path.join(file.dirname, file.basename);
     }
+    if (file.basename[0] === '.') {
+      return;
+    }
     var route = '/' + strip(file.dirname, directory);
     var router = new Router();
     //require(file.dirname)(router);
@@ -51,30 +54,44 @@ var bootstrap = function (options) {
 
 function addRouter(dirname, router) {
   var controller = require(dirname);
-  if ('function' === typeof controller) {
-    if ('GeneratorFunction' === controller.constructor.name) {
-      return router.get('/', controller);
+  if (!controller) {
+    throw new Error('Controller is empty in ' + dirname + ',' + router);
+  }
+  if ('object' !== typeof controller) {
+    return addRoutePath(router, controller);
+  }
+  if (Array.isArray(controller)) {
+    throw new Error('Controller can NOT be an array');
+  }
+  for (var method in controller) {
+    method = method.toLowerCase();
+    if (-1 === router.methods.indexOf(method.toUpperCase())) {
+      throw new Error('Invalid method : ' + method);
     }
-    else {
-      return controller(router);
+    var paths = controller[method];
+    for (var routePath in paths) {
+      var handler = paths[routePath];
+      addRoutePath(router, method, routePath, handler);
     }
   }
-  else if ('object' === typeof controller) {
-    for (var method in controller) {
-      method = method.toLowerCase();
-      if ('function' !== typeof router[method]) {
-        throw new Error("Invalid method " + method + " defined in controller");
-      }
-      var paths = controller[method];
-      for (var routePath in paths) {
-        var handler = paths[routePath];
-        if ('function' !== typeof handler || 'GeneratorFunction' === controller.constructor.name) {
-          throw new Error('Router handler must be a generator function !');
-        }
-        router[method](routePath, handler);
-      }
+  return;
+}
+
+function addRoutePath (router, _method, _routePath, _handler) {
+  handler = _handler || _routePath || _method;
+  routePath = !!_handler ? _routePath : '/';
+  method  = !!_routePath ? _method.toLowerCase() : 'get';
+
+  if ('function' === typeof handler && 'GeneratorFunction' === handler.constructor.name) {
+    if (-1 === router.methods.indexOf(method.toUpperCase())) {
+      throw new Error('Invalid method : ' + method);
     }
-  } 
+    return router[method](routePath, handler);
+  }
+  if ('function' === typeof handler) {
+    return handler(router);
+  }
+  throw new Error((typeof handler) + ' can not be set as a router');
 }
 
 module.exports = bootstrap;
