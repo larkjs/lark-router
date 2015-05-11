@@ -13,6 +13,23 @@ describe('index', function(){
   });
 });
 
+describe('generator', function(){
+  it('should say "Hello Generator"', function(done){
+    request
+      .get('/generator')
+      .expect(200)
+      .expect('Hello Generator', done);
+  });
+});
+
+describe('object', function(){
+  it('should say "Hello Object"', function(done){
+    request
+      .get('/object')
+      .expect(200)
+      .expect('Hello Object', done);
+  });
+});
 
 describe('user/create', function(){
   it('should say "Hello Create"', function(done){
