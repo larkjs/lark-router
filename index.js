@@ -40,12 +40,42 @@ var bootstrap = function (options) {
       file.dirname = path.join(file.dirname, file.basename);
     }
     var route = '/' + strip(file.dirname, directory);
-    var router = require(file.dirname)(new Router());
+    var router = new Router();
+    //require(file.dirname)(router);
+    addRouter(file.dirname, router);
     routers.push(mount(route, router.middleware()));
   });
   this.larkBootstrap = true;
   return compose(routers);
 };
+
+function addRouter(dirname, router) {
+  var controller = require(dirname);
+  if ('function' === typeof controller) {
+    if ('GeneratorFunction' === controller.constructor.name) {
+      return router.get('/', controller);
+    }
+    else {
+      return controller(router);
+    }
+  }
+  else if ('object' === typeof controller) {
+    for (var method in controller) {
+      method = method.toLowerCase();
+      if ('function' !== typeof router[method]) {
+        throw new Error("Invalid method " + method + " defined in controller");
+      }
+      var paths = controller[method];
+      for (var routePath in paths) {
+        var handler = paths[routePath];
+        if ('function' !== typeof handler || 'GeneratorFunction' === controller.constructor.name) {
+          throw new Error('Router handler must be a generator function !');
+        }
+        router[method](routePath, handler);
+      }
+    }
+  } 
+}
 
 module.exports = bootstrap;
 
