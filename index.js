@@ -7,8 +7,9 @@ var compose = require('koa-compose');
 var fs = require('fs');
 
 
-var dirname = require('app-root-path').toString();
 var used = false;
+
+var dirname = path.dirname(process.mainModule.filename);
 
 /**
  * add bootstrap
