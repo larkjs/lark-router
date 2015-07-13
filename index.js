@@ -78,10 +78,10 @@ function addRouter(dirname, router) {
   return;
 }
 
-function addRoutePath (router, _method, _routePath, _handler) {
-  var handler = _handler || _routePath || _method;
-  var routePath = !!_handler ? _routePath : '/';
-  var method  = !!_routePath ? _method.toLowerCase() : 'get';
+function addRoutePath (router, method, routePath, handler) {
+  var handler = handler || routePath || method;
+  var routePath = !!handler ? routePath : '/';
+  var method  = !!routePath ? method.toLowerCase() : 'get';
 
   if ('function' === typeof handler && 'GeneratorFunction' === handler.constructor.name) {
     if (-1 === router.methods.indexOf(method.toUpperCase())) {
