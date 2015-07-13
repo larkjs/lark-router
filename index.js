@@ -79,9 +79,9 @@ function addRouter(dirname, router) {
 }
 
 function addRoutePath (router, _method, _routePath, _handler) {
-  handler = _handler || _routePath || _method;
-  routePath = !!_handler ? _routePath : '/';
-  method  = !!_routePath ? _method.toLowerCase() : 'get';
+  var handler = _handler || _routePath || _method;
+  var routePath = !!_handler ? _routePath : '/';
+  var method  = !!_routePath ? _method.toLowerCase() : 'get';
 
   if ('function' === typeof handler && 'GeneratorFunction' === handler.constructor.name) {
     if (-1 === router.methods.indexOf(method.toUpperCase())) {
