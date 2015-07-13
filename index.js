@@ -17,6 +17,7 @@ var dirname = path.dirname(process.mainModule.filename);
  * @returns {Function|*|exports}
  */
 var bootstrap = function (options) {
+    var app = this
   if (used) return function*(next) {
     yield next
   };
@@ -45,8 +46,7 @@ var bootstrap = function (options) {
     }
     var route = '/' + strip(file.dirname, directory);
     var router = new Router();
-    //require(file.dirname)(router);
-    addRouter(file.dirname, router);
+    addRouter.call(app, file.dirname, router);
     routers.push(mount(route, router.middleware()));
   });
   this.larkBootstrap = true;
@@ -59,7 +59,7 @@ function addRouter(dirname, router) {
     throw new Error('Controller is empty in ' + dirname + ',' + router);
   }
   if ('object' !== typeof controller) {
-    return addRoutePath(router, controller);
+    return addRoutePath.call(this, router, controller);
   }
   if (Array.isArray(controller)) {
     throw new Error('Controller can NOT be an array');
@@ -72,7 +72,7 @@ function addRouter(dirname, router) {
     var paths = controller[method];
     for (var routePath in paths) {
       var handler = paths[routePath];
-      addRoutePath(router, method, routePath, handler);
+      addRoutePath.call(this, router, method, routePath, handler);
     }
   }
   return;
@@ -90,7 +90,7 @@ function addRoutePath (router, _method, _routePath, _handler) {
     return router[method](routePath, handler);
   }
   if ('function' === typeof handler) {
-    return handler(router);
+    return handler.call(this, router);
   }
   throw new Error((typeof handler) + ' can not be set as a router');
 }
