@@ -7,8 +7,9 @@ var compose = require('koa-compose');
 var fs = require('fs');
 
 
-var dirname = require('app-root-path').toString();
 var used = false;
+
+var dirname = path.dirname(process.mainModule.filename);
 
 /**
  * add bootstrap
@@ -16,6 +17,7 @@ var used = false;
  * @returns {Function|*|exports}
  */
 var bootstrap = function (options) {
+    var app = this
   if (used) return function*(next) {
     yield next
   };
@@ -39,13 +41,59 @@ var bootstrap = function (options) {
       file.basename = file.basename.substring(0, file.basename.length - 3)
       file.dirname = path.join(file.dirname, file.basename);
     }
+    if (file.basename[0] === '.') {
+      return;
+    }
     var route = '/' + strip(file.dirname, directory);
-    var router = require(file.dirname)(new Router());
+    var router = new Router();
+    addRouter.call(app, file.dirname, router);
     routers.push(mount(route, router.middleware()));
   });
   this.larkBootstrap = true;
   return compose(routers);
 };
+
+function addRouter(dirname, router) {
+  var controller = require(dirname);
+  if (!controller) {
+    throw new Error('Controller is empty in ' + dirname + ',' + router);
+  }
+  if ('object' !== typeof controller) {
+    return addRoutePath.call(this, router, controller);
+  }
+  if (Array.isArray(controller)) {
+    throw new Error('Controller can NOT be an array');
+  }
+  for (var method in controller) {
+    method = method.toLowerCase();
+    if (-1 === router.methods.indexOf(method.toUpperCase())) {
+      throw new Error('Invalid method : ' + method);
+    }
+    var paths = controller[method];
+    for (var routePath in paths) {
+      var handler = paths[routePath];
+      addRoutePath.call(this, router, method, routePath, handler);
+    }
+  }
+  return;
+}
+
+function addRoutePath (router, method, oriRoutePath, oriHandler) {
+  var handler = oriHandler || oriRoutePath || method;
+  var routePath = !!oriHandler ? oriRoutePath : '/';
+  var method  = !!oriRoutePath ? method.toLowerCase() : 'get';
+
+  if ('function' === typeof handler && 'GeneratorFunction' === handler.constructor.name) {
+    if (-1 === router.methods.indexOf(method.toUpperCase())) {
+      throw new Error('Invalid method : ' + method);
+    }
+    return router[method](routePath, handler);
+  }
+  if ('function' === typeof handler) {
+    return handler.call(this, router);
+  }
+  throw new Error((typeof handler) + ' can not be set as a router');
+}
 
 module.exports = bootstrap;
 
