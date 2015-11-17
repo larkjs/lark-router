@@ -1,18 +1,28 @@
 /**
- * Created by mdemo on 14/11/13.
+ * Example of lark router
  */
+'use strict';
 
-//To work around mocha test
+import _debug   from 'debug';
+import convert  from 'koa-convert';
+import Koa      from 'koa';
+import Router   from '..';
+
+const debug = _debug('lark-router');
+
+debug("Example: set main module to example app.js for test");
 process.mainModule = module;
 
-var koa = require('koa');
-var router = require('..');
-var app = module.exports = koa();
+const app     = new Koa();
 
-app.use(router({directory:'controllers'}));
-app.use(function*(next){
-  console.log(123);
-  yield  next;
+// options is exactly the same as default options
+const router  = new Router('controllers', {
+    'param_prefix': '_',
+    'default': 'index',
 });
-app.use(router({directory:'controllers'}));
-app.listen(3002);
+
+debug("Example: router.routes");
+app.use(convert(router.routes()));
+
+debug("Example: app listening");
+app.listen(3000);
