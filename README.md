@@ -1,7 +1,7 @@
 lark-router
 =============
 
-Route configuration middleware for koajs.
+Router for lark based on koa 2.0
 
 [![NPM version][npm-image]][npm-url]
 [![build status][travis-image]][travis-url]
