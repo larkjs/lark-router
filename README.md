@@ -13,56 +13,74 @@ Route configuration middleware for koajs.
 $ npm install lark-router
 ```
 
-### API
-#### `app.use(router(options))`
+## API
+### `app.use(new Router().load('controllers').routes())`
 
 ```javascript
-var koa = require('koa');
-var router = require('lark-router');
-var app = koa();
+import Koa    from 'koa';
+import Router from 'lark-router';
 
-app.use(router({directory:'controllers'}));
+const router = new Router().load('controllers');
 
-app.listen(3002);
+const app = new Kao();
+
+app.use(router.routes());
+
+app.listen(3000);
 ```
 
+## load
 
+### routes
 
+`lark-router` extends `koa-router` with a method `load(directory, prefix)`. By calling `router.load(directory, prefix)`, `lark-router` will load all js files recursively under that directory, and use their exports as callbacks to the routes corresponding to their paths.
 
-#### directory
-The `directory` configuration option (optional) is the path to a directory.
-Specify a directory to have lark-router scan all files recursively to find files
-that match the controller-spec API. With this API, the directory structure
-dictates the paths at which handlers will be mounted.
+This is how file paths is converted into routes (with default options: `{ default: 'index.js', param_prefix: '_'}`)
 
-```text
-controllers
- |-user
-     |-create.js
-     |-list.js
- |-product
-     |-index.js
 ```
-```javascript
-// create.js
-module.exports = function(router){
-  router.get('/', function *(next){
-    this.body = 'Hello koa';
-    yield next;
-  });
-  return router;
-};
+directory
+  ├─ index.js         => /
+  ├─ hello/
+  │     └─ world.js   => /hello/world
+  └─ _category/
+        └─ _title.js  => /:category/:title
 ```
-```javascript
-app.use(bootstrap({
-    directory: 'controllers'
-}));
+
+#### methods
+
+Methods should be defined in those js files, exported as verb properties. We recommand you use verbs in upper case to avoid using reserved words such as `delete`.
+
 ```
-Routes are now:
-```test
-/user/create
-/user/list
-/product
+/**
+ * @file: hello/world.js
+ **/
+ 
+export const GET = async (ctx, next) => {
+    // handle requests on GET /hello/world
+}
+
+export const DELETE = async (ctx, next) => {
+    // handle request on DELETE /hello/world
+}
+
+```
+
+or use `router` directly by exporting a function
+
+```
+/**
+ * @file: hello/world.js
+ **/
+
+export default router => {
+    router.get('/', async (ctx, next) => {
+        // handle requests on GET /hello/world
+    }
+    router.get('/:foo/:bar', async (ctx, next) => {
+        // handle requests on GET /hello/world/:foo/:bar
+    }
+}
+
 ```
 
 ## Tests
