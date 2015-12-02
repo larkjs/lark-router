@@ -14,18 +14,26 @@ process.mainModule = module;
 
 // options is exactly the same as default options
 const router  = new Router({
+    'directory': 'controllers',
     'param_prefix': '_',
     'default': 'index',
-}).load('controllers');
+});
+
+/**
+ * Not implemented in verions 0.x
 
 router.redirect("/haohao", "/methods");
-router.all("*", async (ctx) => {
+router.all("*", function * (next) {
+    const ctx = this;
     debug("Example: router.all " + ctx.method + ' ' + ctx.url);
 });
 
+ *
+ **/
+
 debug("Example: router.routes");
 const app     = new Koa();
-app.use(router.routes());
+app.use(router);
 
 debug("Example: app listening");
 //export for super test

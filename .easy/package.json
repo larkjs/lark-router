@@ -4,10 +4,10 @@
     "description": "An koa route initialization and configuration module.",
     "main": "index.js",
     "engines": {
-        "node": ">=4.0.0"
+        "node": ">=0.12.0"
     },
     "scripts": {
-        "test": "NODE_ENV=testing ./node_modules/.bin/mocha --require should test/"
+        "test": "NODE_ENV=testing ./node_modules/.bin/mocha --harmony --require should test/"
     },
     "repository": {
         "type": "git",
@@ -29,14 +29,14 @@
         "debug": "^2.2.0",
         "escape-string-regexp": "^1.0.3",
         "extend": "^3.0.0",
-        "koa-router": "^6.0.0",
+        "koa-router": "^5.0.0",
         "methods": "^1.1.1",
         "path-to-regexp": "^1.2.1"
     },
     "devDependencies": {
         "chalk": "^1.1.1",
         "easy-babel": "^1.0.1",
-        "koa": "~2.0.0-alpha.3",
+        "koa": "^1.1.2",
         "koa-convert": "^1.2.0",
         "mocha": "~2.0.1",
         "should": "~4.3.0",

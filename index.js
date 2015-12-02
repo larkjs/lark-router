@@ -146,6 +146,10 @@ function loadRouteByFilename (router, filename, routePath, root) {
     let fileModule = require(absolutePath).default || require(absolutePath);
 
     if (fileModule instanceof Function) {
+        // for 0.x
+        if (fileModule.constructor.name === 'GeneratorFunction') {
+            router.get(routePath, fileModule);
+        }
         debug("Router: module is a function, use it to handle router directly");
         let subRouter = Router.create(router.opts);
         let result = fileModule(subRouter);
@@ -194,6 +198,18 @@ function loadByModule (router, routePath, module) {
     }
 }
 
-export default Router;
+// for 0.x
+function OldRouter (options) {
+    let directory = options.directory;
+    delete options.directory;
+    if (!path.isAbsolute(directory)) {
+        directory = path.join(path.dirname(caller()), directory);
+    }
+    return Router.create(options).load(directory).routes();
+}
+
+module.exports = OldRouter;
+
+//export default Router;
 
 debug('Router: load ok');

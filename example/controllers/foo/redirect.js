@@ -1,3 +1,5 @@
 'use strict';
 
-export const redirect = '/methods';
+export default router => {
+    router.redirect('/', '/methods');
+};

@@ -1,6 +1,9 @@
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
-  value: true
+    value: true
 });
-const redirect = exports.redirect = '/methods';
+
+exports.default = function (router) {
+    router.redirect('/', '/methods');
+};
