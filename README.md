@@ -24,7 +24,7 @@ import Router from 'lark-router';
 
 const router = new Router().load('controllers');
 
-const app = new Kao();
+const app = new Koa();
 
 app.use(router.routes());
 
