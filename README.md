@@ -1,7 +1,7 @@
 lark-router
 =============
 
-Router for lark based on koa 2.0
+Router for lark based on koa 1.x
 
 [![NPM version][npm-image]][npm-url]
 [![build status][travis-image]][travis-url]
