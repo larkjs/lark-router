@@ -16,7 +16,9 @@ $ npm install lark-router
 ## API
 ### `app.use(new Router().load('controllers').routes())`
 
-```javascript
+Exmaple:
+
+```
 import Koa    from 'koa';
 import Router from 'lark-router';
 
