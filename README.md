@@ -10,7 +10,7 @@ Router for lark based on koa 2.0
 ## Installation
 
 ```
-$ npm install lark-router
+$ npm install lark-router@~1.0.0
 ```
 
 ## API
