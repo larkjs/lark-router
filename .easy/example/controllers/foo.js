@@ -3,6 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
+exports.GET = undefined;
 
 var _debug2 = require('debug');
 
@@ -12,11 +13,9 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 var debug = (0, _debug3.default)('lark-router');
 
-exports.default = function (router) {
-    router.get('/', function* (next) {
-        var ctx = this;
-        debug("Example: GET /foo");
-        ctx.body = 'GET /foo';
-        yield next;
-    });
+var GET = exports.GET = function* GET(next) {
+    var ctx = this;
+    debug("Example: GET /foo");
+    ctx.body = 'GET /foo';
+    yield next;
 };
