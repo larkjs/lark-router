@@ -14,7 +14,7 @@ $ npm install lark-router@~1.0.0
 ```
 
 ## API
-### `app.use(new Router().load('controllers').routes())`
+`app.use(new Router().load('controllers').routes())`
 
 Exmaple:
 
