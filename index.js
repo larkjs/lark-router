@@ -17,7 +17,7 @@ const debug = _debug('lark-router');
 /**
  * Extends KoaRouter with the following methods:
  * @method create(options) returns a new instance of Router
- * @method load(directory, options) generate routes by the directory structure
+ * @method load(directory, prefix) generate routes by the directory structure
  **/
 class Router extends KoaRouter {
     constructor (options = {}) {
