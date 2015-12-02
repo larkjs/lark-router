@@ -5,28 +5,29 @@ Router for lark based on koa 2.0
 
 [![NPM version][npm-image]][npm-url]
 [![build status][travis-image]][travis-url]
-  
-  
+
+This is for old versions of lark based on Koa 1.x
+
 ## Installation
 
 ```
-$ npm install lark-router
+$ npm install lark-router@~0.5.0
 ```
 
 ## API
-### `app.use(new Router().load('controllers').routes())`
+### `app.use(router('controllers'))`
 
 Exmaple:
 
 ```
-import Koa    from 'koa';
-import Router from 'lark-router';
+var Koa = require('koa');
+var router = require('lark-router');
 
-const router = new Router().load('controllers');
+var app = new Koa();
 
-const app = new Kao();
-
-app.use(router.routes());
+app.use(router({
+    directory: 'controllers'
+}));
 
 app.listen(3000);
 ```
@@ -35,7 +36,7 @@ app.listen(3000);
 
 ### routes
 
-`lark-router` extends `koa-router` with a method `load(directory, prefix)`. By calling `router.load(directory, prefix)`, `lark-router` will load all js files recursively under that directory, and use their exports as callbacks to the routes corresponding to their paths.
+The directory configuration option (optional) is the path to a directory. Specify a directory to have lark-router scan all files recursively to find files that match the controller-spec API. With this API, the directory structure dictates the paths at which handlers will be mounted.
 
 This is how file paths is converted into routes (with default options: `{ default: 'index.js', param_prefix: '_'}`)
 
@@ -57,12 +58,12 @@ Methods should be defined in those js files, exported as verb properties. We rec
  * @file: hello/world.js
  **/
  
-export const GET = async (ctx, next) => {
+exports.GET = function * (next) {
     // handle requests on GET /hello/world
 }
 
-export const DELETE = async (ctx, next) => {
-    // handle request on DELETE /hello/world
+exports.DELETE = function * (next) {
+    // handle requests on DELETE /hello/world
 }
 
 ```
@@ -74,11 +75,11 @@ or use `router` directly by exporting a function
  * @file: hello/world.js
  **/
 
-export default router => {
-    router.get('/', async (ctx, next) => {
+module.exports = function (router) {
+    router.get('/', function * (next) => {
         // handle requests on GET /hello/world
     }
-    router.get('/:foo/:bar', async (ctx, next) => {
+    router.get('/:foo/:bar', function * (next) => {
         // handle requests on GET /hello/world/:foo/:bar
     }
 }
