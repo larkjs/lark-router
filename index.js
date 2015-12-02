@@ -33,7 +33,7 @@ class Router extends KoaRouter {
         }
         this.opts.prefix_esc = escapeRegexp(this.opts.param_prefix);
 
-        this.opts.default = this.opts.default || 'index';
+        this.opts.default = this.opts.default || 'index.js';
         if ('string' !== typeof this.opts.default || this.opts.default.length === 0) {
             throw new Error("Router options default must be a string");
         }
