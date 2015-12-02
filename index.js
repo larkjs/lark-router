@@ -1,196 +1,198 @@
 /**
- * Lark router
+ * Lark router, auto generate routes by directory structure
  **/
 'use strict';
 
 import _debug     from 'debug';
 import caller     from 'caller';
+import chalk      from 'chalk';
+import extend     from 'extend';
 import path       from 'path';
 import fs         from 'fs';
-import escapeRegexp   from 'escape-string-regexp';
 import KoaRouter  from 'koa-router';
+import escapeRegexp   from 'escape-string-regexp';
 
 const debug = _debug('lark-router');
 
+/**
+ * Extends KoaRouter with the following methods:
+ * @method create(options) returns a new instance of Router
+ * @method load(directory, options) generate routes by the directory structure
+ **/
 class Router extends KoaRouter {
-    constructor (root, options = {}) {
+    constructor (options = {}) {
+        if (options && !(options instanceof Object)) {
+            throw new Error('Options must be an object if given');
+        }
         debug('Router: Router.constructor');
-        if ('string' !== typeof root) {
-            throw new Error("Router root directory should be a string, " + typeof root + " given");
-        }
-        debug('Router: Router.constructor super');
-        super();
-        if (!path.isAbsolute(root)) {
-            debug('Router: root is not absolute, make an absolute one');
-            root = path.join(path.dirname(caller()), root);
-        }
-        if (!fs.statSync(root).isDirectory()) {
-            throw new Error("Router root is not a directory path");
-        }
-        debug('Router: route is ' + root);
-        this.root = root;
-        this.options = options;
-        this.routeSet = new Set();
+        super(options);
 
-        this.options.param_prefix = this.options.param_prefix || '_';
-        if ('string' !== typeof this.options.param_prefix || !this.options.param_prefix.match(/^\S+$/)) {
+        this.opts.param_prefix = this.opts.param_prefix || '_';
+        if ('string' !== typeof this.opts.param_prefix || !this.opts.param_prefix.match(/^\S+$/)) {
             throw new Error("Router options param_prefix must be a string matching patter \\S+");
         }
-        this.options.prefix_esc = escapeRegexp(this.options.param_prefix);
+        this.opts.prefix_esc = escapeRegexp(this.opts.param_prefix);
 
-        this.options.default = this.options.default || 'index';
-        if ('string' !== typeof this.options.default || this.options.default.length === 0) {
+        this.opts.default = this.opts.default || 'index';
+        if ('string' !== typeof this.opts.default || this.opts.default.length === 0) {
             throw new Error("Router options default must be a string");
         }
-
-        this.load();
     }
-    create (root, options) {
+    static create (options) {
         debug('Router: Router.create');
+        return new Router(options);
+    }
+    load (root, prefix) {
+        debug('Router: loading by root path ' + root);
+        if ('string' !== typeof root) {
+            throw new Error('Router loading root path is not a string');
+        }
+
+        root = path.normalize(root);
+
         if (!path.isAbsolute(root)) {
             debug('Router: root is not absolute, make an absolute one');
             root = path.join(path.dirname(caller()), root);
         }
-        return new Router(root, options);
-    }
-    load (dirname) {
-        debug('Router: loading by dirname');
-        if ('string' !== typeof dirname) {
-            dirname = '.';
+
+        if (prefix) {
+            prefix = path.normalize(prefix);
+            if (!prefix || !prefix[0] || prefix[0] === '.') {
+                throw new Error('Invalid router prefix ' + prefix);
+            }
+            debug('Router: create a new Router to load with prefix ' + prefix);
+            const opts = extend(true, {}, this.opts);
+            opts.routePrefix = opts.routePrefix || '';
+            opts.routePrefix += prefix;
+            const router = Router.create(opts).load(root);
+            debug('Router: using the router with prefix ' + prefix);
+            this.use(prefix, router.routes());
+            return this;
         }
-        let absoluteDirname;
-        if (path.isAbsolute(dirname)) {
-            debug('Router: dirname is absolute');
-            absoluteDirname = dirname;
-        }
-        else {
-            debug('Router: dirname is not absolute, make an absolute one');
-            absoluteDirname = path.join(this.root, dirname);
-        }
-        debug('Router: absolute dirname is ' + absoluteDirname);
-        if (absoluteDirname.slice(0, this.root.length) !== this.root) {
-            throw new Error("Access denied, router can not load directory " + absoluteDirname);
-        }
-        dirname = absoluteDirname.slice(this.root.length) || '/';
-        debug('Router: loading all files and directories under ' + dirname);
-        let dirlist = [];
-        let filelist = [];
-        let list = fs.readdirSync(absoluteDirname);
-        for (let filename of list) {
-            const absoluteFileName = path.join(absoluteDirname, filename);
-            const stat = fs.statSync(absoluteFileName);
-            let relativeFileName = path.join(dirname, filename);
+
+        debug('Router; loading by directory structure of ' + root); 
+
+        /**
+         * First load all files, then load directories recrusively
+         **/
+        const dirlist   = [];
+        const filelist  = [];
+        const list      = fs.readdirSync(root);
+        for (const filename of list) {
+            let routePath = name2routePath(filename, this.options);
+            if (routePath === false) {
+                continue;
+            }
+            routePath = '/' + routePath;
+            const item = { filename, routePath };
+            const absolutePath = path.join(root, filename);
+            const stat = fs.statSync(absolutePath);
             if (stat.isDirectory()) {
-                dirlist.push(relativeFileName);
+                dirlist.push(item);
             }
             else if (stat.isFile()) {
-                filelist.push(relativeFileName);
+                filelist.push(item);
             }
         }
-        for (let relativeFileName of filelist) {
-            debug('Router: load file in path (' + relativeFileName + ')');
-            if (path.extname(relativeFileName) !== '.js') {
-                debug('Router: not js file, abort');
-                continue;
-            }
-            const absoluteFileName = path.join(this.root, relativeFileName);
-            let routePath = relativeFileName.slice(0, -path.extname(relativeFileName).length);
-            const prefix_esc = this.options.prefix_esc;
-            const param_prefix = this.options.param_prefix;
-            routePath = routePath.replace(new RegExp("\\/" + prefix_esc + "(?!(" + prefix_esc + ")|$)", 'g'), "/:")
-                                 .replace(new RegExp("\\/" + prefix_esc + prefix_esc, 'g'), "/" + param_prefix);
-            const routePathSplit = routePath.split('/');
-            if (routePathSplit[routePathSplit.length - 1] === this.options.default) {
-                routePathSplit.pop();
-                routePath = routePathSplit.join('/') || '/';
-            }
-            debug('Router: load file as route path (' + routePath + ')');
-
-            const fileModule = require(absoluteFileName);
-
-            if (fileModule.default) {
-                debug('Router: use default as get');
-                fileModule.get = fileModule.default;
-            }
-
-            let redirect = false;
-            for (let method in fileModule) {
-                let method_uc = method.toUpperCase();
-                if (method_uc !== 'REDIRECT' && 'string' !== typeof fileModule[method]) {
-                    continue;
-                }
-                const routeDescription = method_uc + " " + routePath + " => " + fileModule[method];
-                const routeDescriptionRegexp = routeDescription.replace(/\/(:[^\/]+)/g, '/*');
-                if (this.routeSet.has(routeDescriptionRegexp)) {
-                    throw new Error("Route " + routeDescriptionRegexp + " duplicated");
-                }
-                debug("Router: add router [" + routeDescription + "]");
-                this.redirect(routePath, fileModule[method]);
-                redirect = true;
-                this.routeSet.add(routeDescriptionRegexp);
-            }
-            if (redirect) {
-                continue;
-            }
-
-            for (let method in fileModule) {
-                let method_lc = method.toLowerCase();
-                let method_uc = method.toUpperCase();
-                const routeDescription = method_uc + " " + routePath;
-                const routeDescriptionRegexp = routeDescription.replace(/\/(:[^\/]+)/g, '/*');
-                if (this.routeSet.has(routeDescriptionRegexp)) {
-                    throw new Error("Route " + routeDescriptionRegexp + " duplicated");
-                }
-                if (!(fileModule[method] instanceof Function) || this.methods.indexOf(method_uc) < 0) {
-                    continue;
-                }
-                debug("Router: add router [" + method_uc + " " + routePath + "]");
-                this[method_lc](routePath, fileModule[method]);
-                this.routeSet.add(routeDescriptionRegexp);
-            }
+        for (const item of filelist) {
+            loadRouteByFilename(this, item.filename, item.routePath, root);
         }
-        for (let relativeDirName of dirlist) {
-            debug('Router: load directory in path ' + relativeDirName);
-            this.load(path.join(this.root, relativeDirName));
+        for (const item of dirlist) {
+            this.load(path.join(root, item.filename), item.routePath);
         }
         return this;
     }
-};
+}
 
-// Match Koa 2.x
-Router.prototype.routes = Router.prototype.middleware = function () {
-    const router = this;
-    const dispatch = async (ctx, next) => {
-        const path = router.opts.routerPath || ctx.routerPath || ctx.path;
-        const matched = router.match(path, ctx.method);
-        let layer;
-        let i;
-        let ii;
-        if (ctx.matched) {
-            ctx.matched.push.apply(ctx.matched, matched.path);
-        } else {
-            ctx.matched = matched.path;
+function name2routePath (name, options) {
+    debug('Router: convert name to route path : ' + name);
+    if ('string' !== typeof name) {
+        throw new Error('Name must be a string');
+    }
+    if (name === (options.default || 'index.js')) {
+        return '';
+    }
+    const extname = path.extname(name);
+    if (extname && extname !== '.js') {
+        return false;
+    }
+    name = path.basename(name, extname);
+    if (!name || name[0] === '.') {
+        return false;
+    }
+
+    const prefix = options.param_prefix || '_';
+    const prefix_esc = escapeRegexp(prefix);
+
+    let routePath = name.replace(new RegExp("^" + prefix_esc + "(?!(" + prefix_esc + ")|$)"), ":")
+                        .replace(new RegExp("^" + prefix_esc + prefix_esc), prefix);
+
+    debug('Router: convert result is ' + routePath);
+    return routePath;
+}
+
+function loadRouteByFilename (router, filename, routePath, root) {
+    if ('string' !== typeof filename || 'string' !== typeof root) {
+        throw new Error('Invalid param to load by dirname');
+    }
+    debug('Router: loading file ' + filename);
+    if (path.extname(filename) !== '.js' || filename.length <= 3) {
+        return;
+    }
+
+    debug("Router: route path [" + routePath + "]");
+    const absolutePath = path.join(root, filename);
+    //import fileModule from absolutePath;
+    let fileModule = require(absolutePath).default || require(absolutePath);
+
+    if (fileModule instanceof Function) {
+        debug("Router: module is a function, use it to handle router directly");
+        let subRouter = Router.create(router.opts);
+        let result = fileModule(subRouter);
+        if (result instanceof Router) {
+            subRouter = result;
+        }
+        router.use(routePath, subRouter.routes());
+    }
+    else if (fileModule instanceof Object) {
+        loadByModule(router, routePath, fileModule);
+    }
+    else {
+        throw new Error('Invalid router module');
+    }
+}
+
+function loadByModule (router, routePath, module) {
+    debug("Router: load route by module");
+
+    //handle redirect routes
+    for (const method_ori in module) {
+        const METHOD = method_ori.toUpperCase();
+        if (METHOD !== 'REDIRECT' || 'string' !== typeof module[method_ori]) {
+            continue;
         }
 
-        if (matched.pathAndMethod.length) {
-            i = matched.pathAndMethod.length;
-            while (matched.route && i--) {
-                layer = matched.pathAndMethod[i];
-                ii = layer.stack.length;
-                ctx.captures = layer.captures(path, ctx.captures);
-                ctx.params = layer.params(path, ctx.captures, ctx.params);
+        const desc = METHOD + ' ' + (router.opts.routePrefix || '') + routePath;
+        debug("Router: add router " + chalk.yellow(desc + " => " + module[method_ori]));
+        router.redirect(routePath, module[method_ori]);
+        return;
+    }
 
-                while (ii--) {
-                    await layer.stack[ii](ctx);
-                }
-            }
+    //handle methods
+    for (const method_ori in module) {
+        const method = method_ori.toLowerCase();
+        const METHOD = method_ori.toUpperCase();
+
+        const desc = METHOD + ' ' + (router.opts.routePrefix || '') + routePath;
+
+        if (!(module[method_ori] instanceof Function) || router.methods.indexOf(METHOD) < 0) {
+            continue;
         }
+        debug("Router: add router " + chalk.yellow(desc));
 
-        await next();
-    };
-    dispatch.router = router;
-    return dispatch;
-};
+        router[method](routePath, module[method_ori]);
+    }
+}
 
 export default Router;
 

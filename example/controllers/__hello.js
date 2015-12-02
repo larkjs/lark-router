@@ -3,7 +3,7 @@
 import _debug   from 'debug';
 const debug = _debug('lark-router');
 
-export default async (ctx) => {
+export const GET = async (ctx) => {
     debug("Example: GET /_hello");
     ctx.body = 'GET /_hello';
 };
