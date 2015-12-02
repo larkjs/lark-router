@@ -23,13 +23,13 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { var callNext = step.bind(null, "next"); var callThrow = step.bind(null, "throw"); function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(callNext, callThrow); } } callNext(); }); }; }
 
-var debug = (0, _debug3.default)('lark-router');
+const debug = (0, _debug3.default)('lark-router');
 
 debug("Example: set main module to example app.js for test");
 process.mainModule = module;
 
 // options is exactly the same as default options
-var router = new _2.default({
+const router = new _2.default({
     'param_prefix': '_',
     'default': 'index'
 }).load('controllers');
@@ -46,7 +46,7 @@ router.all("*", (function () {
 })());
 
 debug("Example: router.routes");
-var app = new _koa2.default();
+const app = new _koa2.default();
 app.use(router.routes());
 
 debug("Example: app listening");

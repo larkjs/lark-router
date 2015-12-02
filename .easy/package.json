@@ -4,7 +4,7 @@
     "description": "An koa route initialization and configuration module.",
     "main": "index.js",
     "engines": {
-        "node": ">=0.11.9"
+        "node": ">=4.0.0"
     },
     "scripts": {
         "test": "NODE_ENV=testing ./node_modules/.bin/mocha --require should test/"
@@ -26,6 +26,7 @@
     "dependencies": {
         "caller": "^1.0.1",
         "chalk": "^1.1.1",
+        "debug": "^2.2.0",
         "escape-string-regexp": "^1.0.3",
         "extend": "^3.0.0",
         "koa-router": "^6.0.0",
@@ -33,28 +34,6 @@
         "path-to-regexp": "^1.2.1"
     },
     "devDependencies": {
-        "babel-cli": "^6.1.2",
-        "babel-plugin-syntax-async-functions": "^6.1.18",
-        "babel-plugin-transform-async-to-generator": "^6.1.18",
-        "babel-plugin-transform-es2015-arrow-functions": "^6.1.18",
-        "babel-plugin-transform-es2015-block-scoped-functions": "^6.1.18",
-        "babel-plugin-transform-es2015-block-scoping": "^6.1.18",
-        "babel-plugin-transform-es2015-classes": "^6.1.21",
-        "babel-plugin-transform-es2015-computed-properties": "^6.1.18",
-        "babel-plugin-transform-es2015-constants": "^6.1.4",
-        "babel-plugin-transform-es2015-destructuring": "^6.1.18",
-        "babel-plugin-transform-es2015-for-of": "^6.1.18",
-        "babel-plugin-transform-es2015-function-name": "^6.1.18",
-        "babel-plugin-transform-es2015-literals": "^6.1.18",
-        "babel-plugin-transform-es2015-modules-commonjs": "^6.1.20",
-        "babel-plugin-transform-es2015-object-super": "^6.1.18",
-        "babel-plugin-transform-es2015-parameters": "^6.1.18",
-        "babel-plugin-transform-es2015-shorthand-properties": "^6.1.18",
-        "babel-plugin-transform-es2015-spread": "^6.1.18",
-        "babel-plugin-transform-es2015-sticky-regex": "^6.1.18",
-        "babel-plugin-transform-es2015-template-literals": "^6.1.18",
-        "babel-plugin-transform-es2015-typeof-symbol": "^6.1.18",
-        "babel-plugin-transform-es2015-unicode-regex": "^6.1.18",
         "chalk": "^1.1.1",
         "easy-babel": "^1.0.1",
         "koa": "~2.0.0-alpha.3",

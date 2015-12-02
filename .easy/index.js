@@ -3,8 +3,6 @@
  **/
 'use strict';
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
-
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
@@ -43,158 +41,164 @@ var _escapeStringRegexp2 = _interopRequireDefault(_escapeStringRegexp);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var debug = (0, _debug3.default)('lark-router');
+const debug = (0, _debug3.default)('lark-router');
 
 /**
  * Extends KoaRouter with the following methods:
  * @method create(options) returns a new instance of Router
  * @method load(directory, options) generate routes by the directory structure
  **/
-
-var Router = (function (_KoaRouter) {
-    _inherits(Router, _KoaRouter);
-
-    function Router() {
-        var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
-
-        _classCallCheck(this, Router);
+class Router extends _koaRouter2.default {
+    constructor() {
+        let options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
         if (options && !(options instanceof Object)) {
             throw new Error('Options must be an object if given');
         }
         debug('Router: Router.constructor');
+        super(options);
 
-        var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(Router).call(this, options));
-
-        _this.opts.param_prefix = _this.opts.param_prefix || '_';
-        if ('string' !== typeof _this.opts.param_prefix || !_this.opts.param_prefix.match(/^\S+$/)) {
+        this.opts.param_prefix = this.opts.param_prefix || '_';
+        if ('string' !== typeof this.opts.param_prefix || !this.opts.param_prefix.match(/^\S+$/)) {
             throw new Error("Router options param_prefix must be a string matching patter \\S+");
         }
-        _this.opts.prefix_esc = (0, _escapeStringRegexp2.default)(_this.opts.param_prefix);
+        this.opts.prefix_esc = (0, _escapeStringRegexp2.default)(this.opts.param_prefix);
 
-        _this.opts.default = _this.opts.default || 'index';
-        if ('string' !== typeof _this.opts.default || _this.opts.default.length === 0) {
+        this.opts.default = this.opts.default || 'index';
+        if ('string' !== typeof this.opts.default || this.opts.default.length === 0) {
             throw new Error("Router options default must be a string");
         }
-        return _this;
     }
+    static create(options) {
+        debug('Router: Router.create');
+        return new Router(options);
+    }
+    load(root, prefix) {
+        debug('Router: loading by root path ' + root);
+        if ('string' !== typeof root) {
+            throw new Error('Router loading root path is not a string');
+        }
 
-    _createClass(Router, [{
-        key: 'load',
-        value: function load(root, prefix) {
-            debug('Router: loading by root path ' + root);
-            if ('string' !== typeof root) {
-                throw new Error('Router loading root path is not a string');
+        root = _path2.default.normalize(root);
+
+        if (!_path2.default.isAbsolute(root)) {
+            debug('Router: root is not absolute, make an absolute one');
+            root = _path2.default.join(_path2.default.dirname((0, _caller2.default)()), root);
+        }
+
+        if (prefix) {
+            prefix = _path2.default.normalize(prefix);
+            if (!prefix || !prefix[0] || prefix[0] === '.') {
+                throw new Error('Invalid router prefix ' + prefix);
             }
+            debug('Router: create a new Router to load with prefix ' + prefix);
+            const opts = (0, _extend2.default)(true, {}, this.opts);
+            opts.routePrefix = opts.routePrefix || '';
+            opts.routePrefix += prefix;
+            const router = Router.create(opts).load(root);
+            debug('Router: using the router with prefix ' + prefix);
+            this.use(prefix, router.routes());
+            return this;
+        }
 
-            root = _path2.default.normalize(root);
+        debug('Router; loading by directory structure of ' + root);
 
-            if (!_path2.default.isAbsolute(root)) {
-                debug('Router: root is not absolute, make an absolute one');
-                root = _path2.default.join(_path2.default.dirname((0, _caller2.default)()), root);
-            }
+        /**
+         * First load all files, then load directories recrusively
+         **/
+        const dirlist = [];
+        const filelist = [];
+        const list = _fs2.default.readdirSync(root);
+        var _iteratorNormalCompletion = true;
+        var _didIteratorError = false;
+        var _iteratorError = undefined;
 
-            if (prefix) {
-                prefix = _path2.default.normalize(prefix);
-                if (!prefix || !prefix[0] || prefix[0] === '.') {
-                    throw new Error('Invalid router prefix ' + prefix);
-                }
-                debug('Router: create a new Router to load with prefix ' + prefix);
-                var opts = (0, _extend2.default)(true, {}, this.opts);
-                opts.routePrefix = opts.routePrefix || '';
-                opts.routePrefix += prefix;
-                var router = Router.create(opts).load(root);
-                debug('Router: using the router with prefix ' + prefix);
-                this.use(prefix, router.routes());
-                return this;
-            }
+        try {
+            for (var _iterator = list[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                const filename = _step.value;
 
-            debug('Router; loading by directory structure of ' + root);
-
-            /**
-             * First load all files, then load directories recrusively
-             **/
-            var dirlist = [];
-            var filelist = [];
-            var list = _fs2.default.readdirSync(root);
-            for (var _iterator = list, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
-                var _ref;
-
-                if (_isArray) {
-                    if (_i >= _iterator.length) break;
-                    _ref = _iterator[_i++];
-                } else {
-                    _i = _iterator.next();
-                    if (_i.done) break;
-                    _ref = _i.value;
-                }
-
-                var filename = _ref;
-
-                var routePath = name2routePath(filename, this.options);
+                let routePath = name2routePath(filename, this.options);
                 if (routePath === false) {
                     continue;
                 }
                 routePath = '/' + routePath;
-                var item = { filename: filename, routePath: routePath };
-                var absolutePath = _path2.default.join(root, filename);
-                var stat = _fs2.default.statSync(absolutePath);
+                const item = { filename, routePath };
+                const absolutePath = _path2.default.join(root, filename);
+                const stat = _fs2.default.statSync(absolutePath);
                 if (stat.isDirectory()) {
                     dirlist.push(item);
                 } else if (stat.isFile()) {
                     filelist.push(item);
                 }
             }
-            for (var _iterator2 = filelist, _isArray2 = Array.isArray(_iterator2), _i2 = 0, _iterator2 = _isArray2 ? _iterator2 : _iterator2[Symbol.iterator]();;) {
-                var _ref2;
-
-                if (_isArray2) {
-                    if (_i2 >= _iterator2.length) break;
-                    _ref2 = _iterator2[_i2++];
-                } else {
-                    _i2 = _iterator2.next();
-                    if (_i2.done) break;
-                    _ref2 = _i2.value;
+        } catch (err) {
+            _didIteratorError = true;
+            _iteratorError = err;
+        } finally {
+            try {
+                if (!_iteratorNormalCompletion && _iterator.return) {
+                    _iterator.return();
                 }
+            } finally {
+                if (_didIteratorError) {
+                    throw _iteratorError;
+                }
+            }
+        }
 
-                var item = _ref2;
+        var _iteratorNormalCompletion2 = true;
+        var _didIteratorError2 = false;
+        var _iteratorError2 = undefined;
+
+        try {
+            for (var _iterator2 = filelist[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+                const item = _step2.value;
 
                 loadRouteByFilename(this, item.filename, item.routePath, root);
             }
-            for (var _iterator3 = dirlist, _isArray3 = Array.isArray(_iterator3), _i3 = 0, _iterator3 = _isArray3 ? _iterator3 : _iterator3[Symbol.iterator]();;) {
-                var _ref3;
-
-                if (_isArray3) {
-                    if (_i3 >= _iterator3.length) break;
-                    _ref3 = _iterator3[_i3++];
-                } else {
-                    _i3 = _iterator3.next();
-                    if (_i3.done) break;
-                    _ref3 = _i3.value;
+        } catch (err) {
+            _didIteratorError2 = true;
+            _iteratorError2 = err;
+        } finally {
+            try {
+                if (!_iteratorNormalCompletion2 && _iterator2.return) {
+                    _iterator2.return();
                 }
+            } finally {
+                if (_didIteratorError2) {
+                    throw _iteratorError2;
+                }
+            }
+        }
 
-                var item = _ref3;
+        var _iteratorNormalCompletion3 = true;
+        var _didIteratorError3 = false;
+        var _iteratorError3 = undefined;
+
+        try {
+            for (var _iterator3 = dirlist[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+                const item = _step3.value;
 
                 this.load(_path2.default.join(root, item.filename), item.routePath);
             }
-            return this;
+        } catch (err) {
+            _didIteratorError3 = true;
+            _iteratorError3 = err;
+        } finally {
+            try {
+                if (!_iteratorNormalCompletion3 && _iterator3.return) {
+                    _iterator3.return();
+                }
+            } finally {
+                if (_didIteratorError3) {
+                    throw _iteratorError3;
+                }
+            }
         }
-    }], [{
-        key: 'create',
-        value: function create(options) {
-            debug('Router: Router.create');
-            return new Router(options);
-        }
-    }]);
 
-    return Router;
-})(_koaRouter2.default);
+        return this;
+    }
+}
 
 function name2routePath(name, options) {
     debug('Router: convert name to route path : ' + name);
@@ -204,7 +208,7 @@ function name2routePath(name, options) {
     if (name === (options.default || 'index.js')) {
         return '';
     }
-    var extname = _path2.default.extname(name);
+    const extname = _path2.default.extname(name);
     if (extname && extname !== '.js') {
         return false;
     }
@@ -213,10 +217,10 @@ function name2routePath(name, options) {
         return false;
     }
 
-    var prefix = options.param_prefix || '_';
-    var prefix_esc = (0, _escapeStringRegexp2.default)(prefix);
+    const prefix = options.param_prefix || '_';
+    const prefix_esc = (0, _escapeStringRegexp2.default)(prefix);
 
-    var routePath = name.replace(new RegExp("^" + prefix_esc + "(?!(" + prefix_esc + ")|$)"), ":").replace(new RegExp("^" + prefix_esc + prefix_esc), prefix);
+    let routePath = name.replace(new RegExp("^" + prefix_esc + "(?!(" + prefix_esc + ")|$)"), ":").replace(new RegExp("^" + prefix_esc + prefix_esc), prefix);
 
     debug('Router: convert result is ' + routePath);
     return routePath;
@@ -232,14 +236,14 @@ function loadRouteByFilename(router, filename, routePath, root) {
     }
 
     debug("Router: route path [" + routePath + "]");
-    var absolutePath = _path2.default.join(root, filename);
+    const absolutePath = _path2.default.join(root, filename);
     //import fileModule from absolutePath;
-    var fileModule = require(absolutePath).default || require(absolutePath);
+    let fileModule = require(absolutePath).default || require(absolutePath);
 
     if (fileModule instanceof Function) {
         debug("Router: module is a function, use it to handle router directly");
-        var subRouter = Router.create(router.opts);
-        var result = fileModule(subRouter);
+        let subRouter = Router.create(router.opts);
+        let result = fileModule(subRouter);
         if (result instanceof Router) {
             subRouter = result;
         }
@@ -255,24 +259,24 @@ function loadByModule(router, routePath, module) {
     debug("Router: load route by module");
 
     //handle redirect routes
-    for (var method_ori in module) {
-        var METHOD = method_ori.toUpperCase();
+    for (const method_ori in module) {
+        const METHOD = method_ori.toUpperCase();
         if (METHOD !== 'REDIRECT' || 'string' !== typeof module[method_ori]) {
             continue;
         }
 
-        var desc = METHOD + ' ' + (router.opts.routePrefix || '') + routePath;
+        const desc = METHOD + ' ' + (router.opts.routePrefix || '') + routePath;
         debug("Router: add router " + _chalk2.default.yellow(desc + " => " + module[method_ori]));
         router.redirect(routePath, module[method_ori]);
         return;
     }
 
     //handle methods
-    for (var method_ori in module) {
-        var method = method_ori.toLowerCase();
-        var METHOD = method_ori.toUpperCase();
+    for (const method_ori in module) {
+        const method = method_ori.toLowerCase();
+        const METHOD = method_ori.toUpperCase();
 
-        var desc = METHOD + ' ' + (router.opts.routePrefix || '') + routePath;
+        const desc = METHOD + ' ' + (router.opts.routePrefix || '') + routePath;
 
         if (!(module[method_ori] instanceof Function) || router.methods.indexOf(METHOD) < 0) {
             continue;
