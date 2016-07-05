@@ -10,6 +10,7 @@ import extend     from 'extend';
 import path       from 'path';
 import fs         from 'fs';
 import KoaRouter  from 'koa-router';
+import os         from 'os';
 import escapeRegexp   from 'escape-string-regexp';
 
 const debug = _debug('lark-router');
@@ -56,9 +57,11 @@ class Router extends KoaRouter {
         }
 
         if (prefix) {
-            prefix = String(path.normalize(prefix)).replace(/\\/g,"/");
+            prefix = path.normalize(prefix);
             if (!prefix || !prefix[0] || prefix[0] === '.') {
                 throw new Error('Invalid router prefix ' + prefix);
+            } else if(os.platform().startsWith("win")) {
+                prefix.replace(/\\/g,"/");
             }
             debug('Router: create a new Router to load with prefix ' + prefix);
             const opts = extend(true, {}, this.opts);
