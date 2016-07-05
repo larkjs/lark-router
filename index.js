@@ -56,7 +56,7 @@ class Router extends KoaRouter {
         }
 
         if (prefix) {
-            prefix = path.normalize(prefix);
+            prefix = String(path.normalize(prefix)).replace(/\\/g,"/");
             if (!prefix || !prefix[0] || prefix[0] === '.') {
                 throw new Error('Invalid router prefix ' + prefix);
             }
