@@ -1,10 +1,9 @@
 'use strict';
 
-import _debug   from 'debug';
-const debug = _debug('lark-router');
+const debug = require('debug')('lark-router.exampels.controllers');
 
-export const GET = async (ctx) => {
-    debug("Example: GET /waiting");
+exports.GET = * (ctx) => {
+    debug("GET /waiting");
     const seconds = parseInt(ctx.query.time) * 1000 || 2000;
     return new Promise((resolve, reject) => {
         setTimeout(() => {

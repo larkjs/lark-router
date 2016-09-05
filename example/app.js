@@ -2,15 +2,13 @@
  * Example of lark router
  */
 'use strict';
-
-import _debug   from 'debug';
-import Koa      from 'koa';
-import Router   from '..';
-
-const debug = _debug('lark-router');
-
-debug("Example: set main module to example app.js for test");
 process.mainModule = module;
+
+const debug       = require('lark-router.examples');
+const http        = require('http');
+const LarkRouter  = require('..');
+
+debug('loadding ...');
 
 // options is exactly the same as default options
 const router  = new Router({
@@ -20,13 +18,19 @@ const router  = new Router({
 
 router.redirect("/haohao", "/methods");
 router.all("*", async (ctx) => {
-    debug("Example: router.all " + ctx.method + ' ' + ctx.url);
+    debug("router.all " + ctx.method + ' ' + ctx.url);
 });
 
-debug("Example: router.routes");
-const app     = new Koa();
-app.use(router.routes());
+debug("router.routes");
+router.parser = (req, res) => {
+    return {
+        method: req.method,
+        url:    req.url,
+        ctx:    {req, res},
+    }
+};
+const app = http.createServer(router.routes());
 
-debug("Example: app listening");
+debug("app listening");
 //export for super test
-export default app.listen(3000);
+module.exports = app.listen(3000);

@@ -1,3 +1,3 @@
 'use strict';
 
-export const redirect = '/methods';
+exports.redirect = '/methods';

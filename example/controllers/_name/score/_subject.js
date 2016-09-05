@@ -1,9 +1,8 @@
 'use strict';
 
-import _debug   from 'debug';
-const debug = _debug('lark-router');
+const debug = require('debug')('lark-router.exampels.controllers');
 
-export const GET = async (ctx) => {
-    debug("Example: GET /:name/score/:subject");
+exports.GET = * (ctx) => {
+    debug("GET /:name/score/:subject");
     ctx.body = 'GET /:name/score/:subject';
 };

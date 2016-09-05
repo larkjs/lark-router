@@ -1,24 +1,23 @@
 'use strict';
+  
+const debug = require('debug')('lark-router.exampels.controllers');
 
-import _debug   from 'debug';
-const debug = _debug('lark-router');
-
-export const GET = async (ctx) => {
-    debug("Example: GET /methods");
+exports.GET = * (ctx) => {
+    debug("GET /methods");
     ctx.body = 'GET /methods';
 };
 
-export const POST = async (ctx) => {
-    debug("Example: POST /methods");
+exports.POST = * (ctx) => {
+    debug("POST /methods");
     ctx.body = 'POST /methods';
 };
 
-export const PUT = async (ctx) => {
-    debug("Example: PUT /methods");
+exports.PUT = * (ctx) => {
+    debug("PUT /methods");
     ctx.body = 'PUT /methods';
 };
 
-export const DELETE = async (ctx) => {
-    debug("Example: DELETE /methods");
+exports.DELETE = * (ctx) => {
+    debug("DELETE /methods");
     ctx.body = 'DELETE /methods';
 };

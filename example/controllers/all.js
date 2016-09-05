@@ -2,7 +2,7 @@
 
 const debug = require('debug')('lark-router.exampels.controllers');
 
-exports.GET = * (ctx) => {
-    debug("GET /:id/me");
-    ctx.body = 'GET /:id/me';
+exports.ALL = * (ctx) => {
+    debug("GET /foo");
+    ctx.body = 'GET /foo';
 };
