@@ -11,13 +11,6 @@ const adapter = require('./base');
 
 debug('loading ...');
 
-function adapt (targetMethod, targetPath, handler) {
-    return (req, res) => {
-        const method = req.method;
-        const url    = req.url;
-    }
-};
-
 const httpAdapter = $.assign({
     get mapping () {
         return mapping;
