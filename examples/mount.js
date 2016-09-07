@@ -1,35 +1,34 @@
 /**
- * The use of mounting
+ * The use of lark-route for mounting use
  **/
 'use strict';
 
-const debug = require('debug')('lark-router.examples.mount');
-const Router = require('..');
+const debug   = require('debug')('lark-router.exampels.http');
+const http    = require('http');
+const Router  = require('..');
 
 debug('loading ...');
 
-const mainRouter = new Router();
-const subRouter  = new Router();
+const main  = new Router();
+const api   = new Router();
+const foo   = new Router();
+const bar   = new Router();
 
-mainRouter.match = (condition, target) => {
-    return target.toString()[0] === condition.toString();
-};
+main.get('/api/:version/:subroutine*', api);
 
-subRouter.match = (condition, target) => {
-    return target.toString()[1] === condition.toString();
-};
+api.get('/foo/:subroutine*', foo);
+api.get('/bar/:subroutine*', bar);
 
-mainRouter.route(1, target => console.log('m1    ' + target));
-mainRouter.route(2, subRouter);
+foo.get('/:whatever*', (req, res) => {
+    console.log('foo requested! v=' + req.params.version);
+    res.end('foo');
+});
 
-subRouter.route(1, target => console.log('s1    ' + target));
-subRouter.route(2, target => console.log('s2    ' + target));
+bar.get('/:whatever*', (req, res) => {
+    console.log('bar requested! v=' + req.params.version);
+    res.end('bar');
+});
 
-mainRouter.dispatch(1);
-mainRouter.dispatch(11);
-mainRouter.dispatch(12);
-mainRouter.dispatch(2);
-mainRouter.dispatch(21);
-mainRouter.dispatch(22);
+http.createServer(main.routes()).listen(3000, () => console.log("server listening on 3000 ..."));
 
 debug('loaded!');

@@ -1,5 +1,5 @@
 /**
- * The use of lark-route for http apps
+ * The use of lark-route for methods
  **/
 'use strict';
 
