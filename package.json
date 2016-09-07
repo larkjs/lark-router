@@ -30,8 +30,12 @@
     "extend": "^3.0.0",
     "lodash": "^4.15.0",
     "methods": "^1.1.2",
+<<<<<<< HEAD
     "path-to-regexp": "^1.5.3",
     "switch-case": "^0.2.0"
+=======
+    "path-to-regexp": "^1.5.3"
+>>>>>>> 4fbf3260e54fe8443fdbfb0f4981af72730da798
   },
   "devDependencies": {
     "istanbul": "^0.4.5",
