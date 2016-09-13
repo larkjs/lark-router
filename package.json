@@ -30,12 +30,13 @@
     "lodash": "^4.15.0",
     "methods": "^1.1.2",
     "path-to-regexp": "^1.5.3",
-    "switch-case": "^0.2.0"
+    "switch-case": "^0.3.1"
   },
   "devDependencies": {
     "istanbul": "^0.4.5",
+    "koa": "^2.0.0-alpha.6",
     "mocha": "~2.0.1",
     "should": "~4.3.0",
-    "supertest": "~0.15.0"
+    "supertest": "^2.0.0"
   }
 }
