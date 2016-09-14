@@ -22,13 +22,13 @@ const main = new Router();
 const api  = new Router().configure({
     methods: [],
     subroutine: 'api_sub',
+    'nesting-path-auto-complete': false,
 });
 const welcome = new Router();
 // for test
 const other   = new Router().configure({
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'HEAD'],
     subroutine: null,
-    'nesting-path-auto-complete': true,
 });
 other.subroutine;
 
@@ -37,7 +37,7 @@ main.get('/api/:version', api);
 api.get('/', response('/'));
 api.get('/foo/:content', response('/foo/:content'));
 api.get('/bar/:content', response('/bar/:content'));
-api.get('/welcome/:api_sub*', welcome);
+api.get('/welcome/:api_sub*/home', welcome);
 
 welcome.get('/:content', response('Welcome Haohao'));
 welcome.post('/:content', response('Welcome Haohao (POST)'));

@@ -112,11 +112,6 @@ class Router extends EventEmitter {
         this._config          = extend(true, this._config, options);
         assert(Array.isArray(this._config.methods), 'Methods must be an array!');
 
-        if (this.subroutine !== defaultConfig.subroutine
-            && !options.hasOwnProperty('nesting-path-auto-complete')) {
-            this._config['nesting-path-auto-complete'] = false;
-        }
-
         this._httpMethods     = $.cloneDeep(this._config.methods).map(o => o.toLowerCase());
         this._specialMethods  = ['all', 'routed', 'other'];
         this._methods         = $.cloneDeep(this._httpMethods).concat($.cloneDeep(this._specialMethods));
