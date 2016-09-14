@@ -60,17 +60,16 @@ class Router extends EventEmitter {
         debug('matched!');
 
         const keys = condition.regexp.keys;
-        const startIndex = Object.keys(o.params).length / 2;
+        const startIndex = Object.keys(o.params).length;
         for (let i = 1; i < result.length; i++) {
-            const name = keys[i - 1].name;
-            const index = '$' + (i + startIndex);
-            assert(!o.params.hasOwnProperty(name), "Duplicated path param name [" + name + "]!");
-            assert(!o.params.hasOwnProperty(index), "Reserved path param name [" + name + "]!");
-
-            o.params[name] = o.params[index] = $.cloneDeep(result[i]) || '/';
-            if (condition.nesting && name === this.subroutine) {
-                o.subroutineIndex = index;
+            const index = i - 1;
+            let name = keys[index].name;
+            if ('number' === typeof name) {
+                name += startIndex;
             }
+            assert(!o.params.hasOwnProperty(name), "Duplicated path param name [" + name + "]!");
+
+            o.params[name] = $.cloneDeep(result[i]) || '/';
         }
         condition.nesting && (o.subroutine = this.subroutine);
         
@@ -85,8 +84,6 @@ class Router extends EventEmitter {
         o.path = o.params[o.subroutine];
         if (o.path[0] != '/') o.path = '/' + o.path;
         delete o.params[o.subroutine];
-        delete o.params[o.subroutineIndex];
-        delete o.subroutineIndex;
         delete o.subroutine;
         req.routed--;
         

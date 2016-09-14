@@ -33,6 +33,7 @@ const other   = new Router().configure({
 other.subroutine;
 
 main.get('/api/:version', api);
+main.get('/other', other);
 
 api.get('/', response('/'));
 api.get('/foo/:content', response('/foo/:content'));
@@ -42,12 +43,12 @@ api.get('/welcome/:api_sub*/home', welcome);
 welcome.get('/:content', response('Welcome Haohao'));
 welcome.post('/:content', response('Welcome Haohao (POST)'));
 
+other.all('/', api);
 
 main.get('/api/:version/:content*', response('/api/:version/:content*', false));
 main.routed('/api/:version/:content*', response('/api/:version/:content*', false));
 main.other('*', response('*'));
 
-other.all('/', api);
 /* for errors
 main.on('error', error => debug('Main:' + error.stack));
 api.on('error', error => debug('API:' + error.stack));

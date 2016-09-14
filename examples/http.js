@@ -23,7 +23,7 @@ router.get('/hello/world', (req, res) => {
 });
 router.get(/^\/home\/(\d+)$/, (req, res) => {
     debug('GET /^\\/home\\/(\\d+)$/');
-    res.end('Welcome home, No.' + req.params.$1 + "\n");
+    res.end('Welcome home, No.' + req.params[0] + "\n");
 });
 router.get('/home/:name', (req, res) => {
     debug('GET /home/:name');
@@ -31,11 +31,11 @@ router.get('/home/:name', (req, res) => {
 });
 router.get('/home/:name/:page', (req, res) => {
     debug('GET /home/:name/:page');
-    res.end('Welcome to page <' + req.params.$2 +'> by ' + req.params.name + "\n");
+    res.end('Welcome to page <' + req.params.page +'> by ' + req.params.name + "\n");
 });
 router.post('/home/:name/:page', (req, res) => {
     debug('POST /home/:name/:page');
-    res.end('Thank you for posting page <' + req.params.$2 +'>, ' + req.params.name + "\n");
+    res.end('Thank you for posting page <' + req.params.page +'>, ' + req.params.name + "\n");
 });
 router.route('GET', '/crash', (req, res) => {
     debug('GET /crash');
