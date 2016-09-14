@@ -30,7 +30,7 @@
     "lodash": "^4.15.0",
     "methods": "^1.1.2",
     "path-to-regexp": "^1.5.3",
-    "switch-case": "^0.3.1"
+    "switch-case": "^0.4.0"
   },
   "devDependencies": {
     "istanbul": "^0.4.5",

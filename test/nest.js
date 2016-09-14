@@ -1,12 +1,12 @@
 /**
- * Test the simple use of proxying
+ * Test the simple use of nesting 
  **/
 'use strict';
 
-const debug   = require('debug')('lark-router.test.proxy');
+const debug   = require('debug')('lark-router.test.nesting');
 const request = require('supertest');
 
-const app     = require('../examples/proxy');
+const app     = require('../examples/nest');
 
 debug('loading ...');
 

@@ -1,9 +1,9 @@
 /**
- * The use of lark-route for mounting use
+ * The use of lark-route for nesting use
  **/
 'use strict';
 
-const debug   = require('debug')('lark-router.exampels.http');
+const debug   = require('debug')('lark-router.exampels.nest');
 const http    = require('http');
 const Router  = require('..');
 
@@ -19,12 +19,20 @@ function response (path, send = true) {
 }
 
 const main = new Router();
-const api  = new Router({
+const api  = new Router().configure({
+    methods: [],
     subroutine: 'api_sub',
 });
 const welcome = new Router();
+// for test
+const other   = new Router().configure({
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'HEAD'],
+    subroutine: null,
+    'nesting-path-auto-complete': true,
+});
+other.subroutine;
 
-main.get('/api/:version/:subroutine*', api);
+main.get('/api/:version', api);
 
 api.get('/', response('/'));
 api.get('/foo/:content', response('/foo/:content'));
@@ -34,10 +42,12 @@ api.get('/welcome/:api_sub*', welcome);
 welcome.get('/:content', response('Welcome Haohao'));
 welcome.post('/:content', response('Welcome Haohao (POST)'));
 
+
 main.get('/api/:version/:content*', response('/api/:version/:content*', false));
 main.routed('/api/:version/:content*', response('/api/:version/:content*', false));
 main.other('*', response('*'));
 
+other.all('/', api);
 /* for errors
 main.on('error', error => debug('Main:' + error.stack));
 api.on('error', error => debug('API:' + error.stack));

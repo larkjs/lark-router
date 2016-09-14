@@ -22,13 +22,12 @@ class Router extends EventEmitter {
         super();
         this._switcher = new Switcher();
         this._enabledMethods = [];
-        this._config = $.cloneDeep(options);
-        this.configure();
+        this.configure(options);
 
         // overwrting switcher methods
         this._switcher.prepare = this._prepare.bind(this);
         this._switcher.match   = this._match.bind(this);
-        this._switcher.proxy   = this._proxy.bind(this);
+        this._switcher.nesting = this._nesting.bind(this);
         this._switcher.execute = this._execute.bind(this);
     }
     // @overwrite switcher
@@ -69,17 +68,17 @@ class Router extends EventEmitter {
             assert(!o.params.hasOwnProperty(index), "Reserved path param name [" + name + "]!");
 
             o.params[name] = o.params[index] = $.cloneDeep(result[i]) || '/';
-            if (condition.proxy && name === this.subroutine) {
+            if (condition.nesting && name === this.subroutine) {
                 o.subroutineIndex = index;
             }
         }
-        condition.proxy && (o.subroutine = this.subroutine);
+        condition.nesting && (o.subroutine = this.subroutine);
         
         return true;
     }
     // @overwrite switcher
-    _proxy (o, req, ...args) {
-        debug('proxying to a sub router ...');
+    _nesting (o, req, ...args) {
+        debug('passing args to the nested router ...');
         o = extend(true, {}, o);
         const subroutine = this.subroutine;
         assert('string' === typeof o.params[o.subroutine], 'subroutine not found!');
@@ -101,12 +100,30 @@ class Router extends EventEmitter {
     }
     configure (options = {}) {
         debug('configuring ...');
+        assert(options instanceof Object, 'Options must be an object!');
+
+        this._config          = this._config instanceof Object ? this._config : $.cloneDeep(defaultConfig);
+        assert(this._config instanceof Object, 'Internal Error');
+
+        if (!Array.isArray(options.methods) || options.methods.length <= 0) {
+            options.methods = methods;
+        }
+
         this._config          = extend(true, this._config, options);
-        this._httpMethods     = $.cloneDeep(this._config.methods || methods).map(o => o.toLowerCase());
+        assert(Array.isArray(this._config.methods), 'Methods must be an array!');
+
+        if (this.subroutine !== defaultConfig.subroutine
+            && !options.hasOwnProperty('nesting-path-auto-complete')) {
+            this._config['nesting-path-auto-complete'] = false;
+        }
+
+        this._httpMethods     = $.cloneDeep(this._config.methods).map(o => o.toLowerCase());
         this._specialMethods  = ['all', 'routed', 'other'];
         this._methods         = $.cloneDeep(this._httpMethods).concat($.cloneDeep(this._specialMethods));
 
         this.bindMethods();
+
+        return this;
     }
     get methods () {
         return $.cloneDeep(this._methods);
@@ -121,13 +138,17 @@ class Router extends EventEmitter {
         assert(this._methods.includes(method), 'Invalid Method!');
         assert('string' === typeof pathexp || pathexp instanceof RegExp, 'Path expression must be a string or a Regular Expression!');
 
-        const regexp = path2regexp(pathexp);
-        let proxy = false;
+        let nesting = false;
         if (handler instanceof Router) {
             handler = handler._switcher;
-            proxy = true;
+            nesting = true;
+            if (this._config['nesting-path-auto-complete'] && !(pathexp instanceof RegExp)) {
+                if (!pathexp.endsWith('/')) pathexp += '/';
+                pathexp += `:${this.subroutine}*`;
+            }
         }
-        return this._switcher.case({ method, pathexp, regexp, proxy }, handler, { break: false });
+        const regexp = path2regexp(pathexp);
+        return this._switcher.case({ method, pathexp, regexp, nesting }, handler, { break: false });
     }
     routes () {
         return (req, ...args) => {
@@ -163,67 +184,19 @@ class Router extends EventEmitter {
             const Method = item[0].toUpperCase() + item.slice(1).toLowerCase();
             const method = Method.toLowerCase();
             const METHOD = Method.toUpperCase();
-            assert(!this[method] && !this[Method] && !this[METHOD], 'Can not assign method ' + METHOD + ' to router');
             this[method] = this[Method] = this[METHOD] = (pathexp, handler) => {
                 return this.route(method, pathexp, handler);
             }
             this._enabledMethods.push(method, Method, METHOD);
         }
     }
-    load (filename, prefix = null) {
-        assert('string' === typeof filename, 'File name must be a string!');
-        if ('string' === typeof prefix) {
-            const router = new Router(this._config);
-            this.all(`/${prefix}/:${this.subroutine}*`, router);
-            router.load(filename);
-            return this;
-        }
-        const rootdirname = path.dirname(process.mainModule.filename);
-        if (!path.isAbsolute(filename)) {
-            filename = path.join(rootdirname, filename);
-        }
-        debug(`loading ${path.relative(rootdirname, filename)} ...`);
-        const stat = fs.statSync(filename);
-        if (stat.isFile()) {
-            const filemodule = require(filename);
-            if (filemodule instanceof Function) {
-                const proxy = filemodule;
-                proxy(this);
-                return this;
-            }
-            assert(filemodule instanceof Object, 'When using a file as a router, exports must be a function or an object');
-            Object.keys(filemodule)
-                .filter(method => 'string' === typeof method)
-                .map(method => method.toLowerCase())
-                .filter(method => this._methods.includes(method))
-                .forEach(method => {
-                const handler = filemodule[method];
-                this.route(method, '/', handler);
-            });
+}
 
-            return this;
-        }
-        const dirname = filename;
-        const subfiles = fs.readdirSync(dirname);
-        for (let subfile of subfiles) {
-            const subfilename = path.join(dirname, subfile);
-            const stat = fs.statSync(subfilename);
-
-            subfile = path.basename(subfile);
-            if (stat.isFile()) {
-                subfile = path.basename(subfile, path.extname(subfile));
-            }
-
-            subfile = this.parseFileName(subfile);
-
-            const router = new Router(this._config);
-            router.load(subfilename, subfile);
-        }
-        return this;
-    }
-    parseFileName (filename) {
-        return filename;
-    }
+const defaultConfig = {
+    max: 0,                               // max routed limit, 0 refers to unlimited
+    methods: methods,                     // methods to support
+    subroutine: 'subroutine',             // subroutine param name for router's nesting
+    'nesting-path-auto-complete': true,   // whether if auto complete the route path for nesting routes
 }
 
 debug('loaded!');
