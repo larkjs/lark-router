@@ -16,10 +16,19 @@ const EventEmitter  = require('events').EventEmitter;
 
 debug('loading ...');
 class Router extends EventEmitter {
+    static get defaultConfig () {
+        return extend(true, {}, defaultConfig);
+    }
+
     // @overwrite
     constructor (options = {}) {
         debug('constructing ...');
         super();
+
+        this.adapter = {
+            parseFileName: defaultParseFileName,
+        };
+
         this._switcher = new Switcher();
         this._enabledMethods = [];
         this.configure(options);
@@ -58,6 +67,7 @@ class Router extends EventEmitter {
         assert(result.length >= 1, 'Internal Error!');
 
         debug('matched!');
+        req.routed++;
 
         const keys = condition.regexp.keys;
         const startIndex = Object.keys(o.params).length;
@@ -85,6 +95,9 @@ class Router extends EventEmitter {
         if (o.path[0] != '/') o.path = '/' + o.path;
         delete o.params[o.subroutine];
         delete o.subroutine;
+
+        // nesting match will add a count on the route counter
+        // but it is not really routed, so -1 to fix the counter
         req.routed--;
         
         return [o, req, ...args];
@@ -92,14 +105,13 @@ class Router extends EventEmitter {
     // @overwrite switcher
     _execute (result, o, req, ...args) {
         req.params = $.cloneDeep(o.params);
-        req.routed++;
         return result(req, ...args);
     }
     configure (options = {}) {
         debug('configuring ...');
         assert(options instanceof Object, 'Options must be an object!');
 
-        this._config          = this._config instanceof Object ? this._config : $.cloneDeep(defaultConfig);
+        this._config          = this._config instanceof Object ? this._config : $.cloneDeep(Router.defaultConfig);
         assert(this._config instanceof Object, 'Internal Error');
 
         if (!Array.isArray(options.methods) || options.methods.length <= 0) {
@@ -156,7 +168,9 @@ class Router extends EventEmitter {
 
             req.routed = 0;
 
-            return this._switcher.dispatch(o, req, ...args).catch(e => this.emit('error', e, req, ...args));
+            return this._switcher.dispatch(o, req, ...args).catch(e => {
+                this.emit('error', e, req, ...args);
+            });
         }
     }
     clear () {
@@ -169,10 +183,9 @@ class Router extends EventEmitter {
         return this;
     }
     bindMethods () {
-        debug('binding methods ...');
+        debug('binding methods [' + $.truncate(this.methods.join(', '), 20) + '](' + this.methods.length + ' methods) ...');
         this.clear();
         for (let item of this.methods) {
-            debug('binding method [' + item + '] ...');
             const Method = item[0].toUpperCase() + item.slice(1).toLowerCase();
             const method = Method.toLowerCase();
             const METHOD = Method.toUpperCase();
@@ -182,6 +195,51 @@ class Router extends EventEmitter {
             this._enabledMethods.push(method, Method, METHOD);
         }
     }
+    load (filename) {
+        assert('string' === typeof filename, 'File name must be a string!');
+        debug('loading router by path ...');
+        filename = path.normalize(filename).replace(/\\/g, '/');
+        if (!path.isAbsolute(filename)) {
+            const rootDirectory = path.dirname(process.mainModule.filename);
+            filename = path.join(rootDirectory, filename);
+        }
+        assert(path.isAbsolute(filename), 'File path must be or can be converted into an absolute path!');
+        debug('path is ' + filename);
+        const stat = fs.statSync(filename);
+        if (stat.isFile()) {
+            debug('loading router by file ...');
+            const filemodule = require(filename);
+            assert(filemodule instanceof Function || filemodule instanceof Object, 'File as router should export a Function or an Object!');
+            if (filemodule instanceof Function) {
+                debug('file module is a function');
+                const router = filemodule(this) || this;
+                assert(router instanceof Router, 'Function as router should return a Router or null');
+                if (router !== this) {
+                    this.all('/', router);
+                }
+            }
+            else {
+                debug('file module is an object');
+                for (let method in filemodule) {
+                    this.route(method, '/', filemodule[method]);
+                }
+            }
+        }
+        else {
+            debug('loading router by directory ...');
+            const files = fs.readdirSync(filename);
+            for (let file of files) {
+                const filepath = path.join(filename, file);
+                const router = new Router();
+                router.adapter = this.adapter;
+                router.load(filepath);
+                file = path.basename(file, path.extname(file));
+                const prefix = this.adapter.parseFileName(file) || file;
+                this.all('/' + prefix, router);
+            }
+        }
+        return this;
+    }
 }
 
 const defaultConfig = {
@@ -189,6 +247,19 @@ const defaultConfig = {
     methods: methods,                     // methods to support
     subroutine: 'subroutine',             // subroutine param name for router's nesting
     'nesting-path-auto-complete': true,   // whether if auto complete the route path for nesting routes
+}
+
+function defaultParseFileName (filename) {
+    let name = filename;
+    const PARAM    = '.as.param';
+    const ASTERISK = '.as.asterisk';
+    if (filename.endsWith(PARAM)) {
+        name = ':' + filename.slice(0, filename.length - PARAM.length);
+    }
+    else if (filename.endsWith(ASTERISK)) {
+        name = ':' + filename.slice(0, filename.length - ASTERISK.length) + '*';
+    }
+    return name;
 }
 
 debug('loaded!');

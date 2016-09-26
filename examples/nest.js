@@ -31,6 +31,7 @@ const other   = new Router().configure({
     subroutine: null,
 });
 other.subroutine;
+const error = new Router();
 
 main.get('/api/:version', api);
 main.get('/other', other);
@@ -39,21 +40,23 @@ api.get('/', response('/'));
 api.get('/foo/:content', response('/foo/:content'));
 api.get('/bar/:content', response('/bar/:content'));
 api.get('/welcome/:api_sub*/home', welcome);
+api.get('/error/:api_sub*', error);
 
 welcome.get('/:content', response('Welcome Haohao'));
 welcome.post('/:content', response('Welcome Haohao (POST)'));
 
 other.all('/', api);
 
+error.all('*', () => { throw new Error("Faked Error!"); });
+
 main.get('/api/:version/:content*', response('/api/:version/:content*', false));
 main.routed('/api/:version/:content*', response('/api/:version/:content*', false));
 main.other('*', response('*'));
 
-/* for errors
-main.on('error', error => debug('Main:' + error.stack));
-api.on('error', error => debug('API:' + error.stack));
-welcome.on('error', error => debug('Welcome:' + error.stack));
-*/
+main.on('error', (error, req, res) => {
+    res.statusCode = 500;
+    res.end("Internal Error: " + error.message);
+});
 
 module.exports = http.createServer(main.routes()).listen(3000, () => debug("server listening on 3000 ..."));
 
