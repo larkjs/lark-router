@@ -6,91 +6,148 @@ Router for lark based on koa 2.0
 [![NPM version][npm-image]][npm-url]
 [![build status][travis-image]][travis-url]
   
-  
-## Installation
+## Install
 
 ```
-$ npm install lark-router@~1.0.0
+$ npm install --save lark-router
 ```
 
-## API
-`app.use(new Router().load('controllers').routes())`
+## Get started
 
-Exmaple:
+_Lark-Router_ is a flexible and easy-to-use url router tool, compatible with native http apps, express apps and koa(v2) apps.
 
+* http apps
 ```
-import Koa    from 'koa';
-import Router from 'lark-router';
+const router = new LarkRouter();
 
-const router = new Router().load('controllers');
+router.get('/foo/bar', (req, res) => res.end("/foo/bra requested!"));
+router.on('error', (error, req, res) => {
+    res.statusCode = 500;
+    res.end(error.message);
+});
 
-const app = new Koa();
-
-app.use(router.routes());
-
-app.listen(3000);
-```
-
-## load
-
-### routes
-
-`lark-router` extends `koa-router` with a method `load(directory, prefix)`. By calling `router.load(directory, prefix)`, `lark-router` will load all js files recursively under that directory, and use their exports as callbacks to the routes corresponding to their paths.
-
-This is how file paths is converted into routes (with default options: `{ default: 'index.js', param_prefix: '_'}`)
-
-```
-directory
-  ├─ index.js         => /
-  ├─ hello/
-  │     └─ world.js   => /hello/world
-  └─ _category/
-        └─ _title.js  => /:category/:title
+http.createServer(router.routes()).listen(3000);
 ```
 
-#### methods
+* koa apps
+```
+const router = new LarkRouter();
+const app    = new Koa();
 
-Methods should be defined in those js files, exported as verb properties. We recommand you use verbs in upper case to avoid using reserved words such as `delete`.
+router.get('/foo/bar', (ctx, next) => ctx.body = '/foo/bar requested!');
+router.on('error', (error, ctx, next) => {
+    ctx.statusCode = 500;
+    ctx.body = error.message;
+    return next();
+});
+
+app.use(router.routes()).listen(3000);
+```
+
+## Params
+
+See [`path-to-regexp`](https://github.com/pillarjs/path-to-regexp). Params object is bind to the first argument of the app processor.
+
+```javascript
+router.get('/:foo/:bar', (ctx, next) => { console.log(ctx.params); }); // ===> { foo: xxx, bar: xxx }
+router.get(/^\/(\d+)\/(\w+)$/, (ctx, next) => { console.log(ctx.params); }); // ===> { 0: xxx, 1: xxx}
+```
+## all, other, routed
+
+Lark router has 3 special methods.
+* all: match all requests
 
 ```
-/**
- * @file: hello/world.js
- **/
- 
-export const GET = async (ctx, next) => {
-    // handle requests on GET /hello/world
+router.all('/foo/bar', handler);  // ===> response to GET/POST/DELETE/...  /foo/bar
+```
+
+* other: match all unmatched requests
+
+```
+router.other('*', response404notfound); // ===> response to GET/POST/DELETE/...  /foo/bar if no other route matched
+```
+
+* routed: match all matched requests
+
+```
+router.routed('/foo/bar', () => console.log('/foo/bar has been routed')); // ===> response to GET/POST/DELETE/...  /foo/bar if some routes matched
+```
+
+## Nesting
+
+You could nest routers together:
+
+```
+mainRouter.all('/api', apiRouter);
+```
+
+_Note that Lark-Router uses a path param to pass the unmatched part of path. That param name can be configured, usually is `subroutine`, and a string `'/:subroutine*'` will be append to that expression automatically._
+
+```
+mainRouter.configure({
+    'subroutine': 'sub',
+    'nesting-path-auto-complete': false,
+});
+
+mainRouter.all('/api/:sub*', api); // equivalent to the example above.
+```
+
+## Async processors
+
+For async processors, return promises.
+
+```
+router.get('/', () => new Promise(...));
+```
+
+## Loading files and directories to generate route rules
+
+Use `router.load(path)` to load a file or a directory.
+
+If the `path` is a file, it should export a function or an object.
+
+* function
+The function accepts the router as parameter.
+
+```javascript
+module.exports = router => {
+    router.get('/foo/bar', (...args) => {...});
 }
+```
 
-export const DELETE = async (ctx, next) => {
-    // handle request on DELETE /hello/world
+Or you can return a new one if you like, but this is not recommended since you may need to re-configure this sub-router, eg. setting a adapter for this router.
+
+```javascript
+module.exports = () => {
+    const router = new LarkRouter();
+    router.get('/foo/bar', (...args) => {...});
+    return router;
 }
-
 ```
 
-or use `router` directly by exporting a function
+* Object
+If an object is exported, all the properties of the object with name in the `router.methods` should be a function and will be processed as `router.route(key, value)`.
 
-```
-/**
- * @file: hello/world.js
- **/
-
-export default router => {
-    router.get('/', async (ctx, next) => {
-        // handle requests on GET /hello/world
-    }
-    router.get('/:foo/:bar', async (ctx, next) => {
-        // handle requests on GET /hello/world/:foo/:bar
-    }
+```javascript
+module.exports = {
+    GET  (ctx, next) => {...}
+    POST (ctx, next) => {...}
 }
-
 ```
 
-## Tests
-  
+_Some methods (eg. delete) are reserved words, so we recommend words capitalized or in upper case, like `GET`, `Post`_
+
+### Loading directories with file name as param
+
+You may still want to use routes like `/:foo/:bar` in loading directories model. We have provide an adapter to do this. `router.adapter.parseFileName` will parse all file/directory names(without extend name) in the loading process. We provid a default one:
+
 ```
-npm test
+/foo.as.param/bar.as.param.js  =>  /:foo/:bar
+/foo/bar.as.asterisk.js        =>  /foo/:bar*
 ```
-  
+
+## DETAILED DOC
+TBD...
   
 [npm-image]: https://img.shields.io/npm/v/lark-router.svg?style=flat-square
 [npm-url]: https://npmjs.org/package/lark-router

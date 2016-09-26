@@ -1,202 +1,266 @@
 /**
- * Lark router, auto generate routes by directory structure
+ * Lark Router
  **/
 'use strict';
 
-import _debug     from 'debug';
-import caller     from 'caller';
-import chalk      from 'chalk';
-import extend     from 'extend';
-import path       from 'path';
-import fs         from 'fs';
-import KoaRouter  from 'koa-router';
-import os         from 'os';
-import escapeRegexp   from 'escape-string-regexp';
+const $             = require('lodash');
+const debug         = require('debug')('lark-router.Router');
+const assert        = require('assert');
+const extend        = require('extend');
+const fs            = require('fs');
+const methods       = require('methods');
+const path          = require('path');
+const path2regexp   = require('path-to-regexp');
+const Switcher      = require('switch-case');
+const EventEmitter  = require('events').EventEmitter;
 
-const debug = _debug('lark-router');
+debug('loading ...');
+class Router extends EventEmitter {
+    static get defaultConfig () {
+        return extend(true, {}, defaultConfig);
+    }
 
-/**
- * Extends KoaRouter with the following methods:
- * @method create(options) returns a new instance of Router
- * @method load(directory, prefix) generate routes by the directory structure
- **/
-class Router extends KoaRouter {
+    // @overwrite
     constructor (options = {}) {
-        if (options && !(options instanceof Object)) {
-            throw new Error('Options must be an object if given');
-        }
-        debug('Router: Router.constructor');
-        super(options);
+        debug('constructing ...');
+        super();
 
-        this.opts.param_prefix = this.opts.param_prefix || '_';
-        if ('string' !== typeof this.opts.param_prefix || !this.opts.param_prefix.match(/^\S+$/)) {
-            throw new Error("Router options param_prefix must be a string matching patter \\S+");
-        }
-        this.opts.prefix_esc = escapeRegexp(this.opts.param_prefix);
+        this.adapter = {
+            parseFileName: defaultParseFileName,
+        };
 
-        this.opts.default = this.opts.default || 'index.js';
-        if ('string' !== typeof this.opts.default || this.opts.default.length === 0) {
-            throw new Error("Router options default must be a string");
+        this._switcher = new Switcher();
+        this._enabledMethods = [];
+        this.configure(options);
+
+        // overwrting switcher methods
+        this._switcher.prepare = this._prepare.bind(this);
+        this._switcher.match   = this._match.bind(this);
+        this._switcher.nesting = this._nesting.bind(this);
+        this._switcher.execute = this._execute.bind(this);
+    }
+    // @overwrite switcher
+    _prepare (o, req, ...args) {
+        debug('preparing ...');
+        o = extend(true, {}, o);
+        return [o, req, ...args];
+    }
+    // @overwrite switcher
+    _match (condition, o, req, ...args) {
+        debug('matching ...');
+        assert('string' === typeof o.method && 'string' === typeof o.path, 'Method and URL must be string!');
+
+        debug('testing [' + o.method.toUpperCase() + ' ' + o.path + '] with [' + condition.method.toUpperCase() + ' ' + condition.pathexp + '] ...');
+        if ((condition.method !== o.method || (this._config.max > 0 && this._config.max <= req.routed))
+            && !this._specialMethods.includes(condition.method)) {
+            return false;
+        }
+
+        const result = condition.regexp.exec(o.path);
+        if (!result) return false;
+
+        if ((condition.method === 'routed' && !req.routed) ||
+            (condition.method === 'other'  && req.routed)) {
+            return false;
+        }
+
+        assert(result.length >= 1, 'Internal Error!');
+
+        debug('matched!');
+        req.routed++;
+
+        const keys = condition.regexp.keys;
+        const startIndex = Object.keys(o.params).length;
+        for (let i = 1; i < result.length; i++) {
+            const index = i - 1;
+            let name = keys[index].name;
+            if ('number' === typeof name) {
+                name += startIndex;
+            }
+            assert(!o.params.hasOwnProperty(name), "Duplicated path param name [" + name + "]!");
+
+            o.params[name] = $.cloneDeep(result[i]) || '/';
+        }
+        condition.nesting && (o.subroutine = this.subroutine);
+        
+        return true;
+    }
+    // @overwrite switcher
+    _nesting (o, req, ...args) {
+        debug('passing args to the nested router ...');
+        o = extend(true, {}, o);
+        const subroutine = this.subroutine;
+        assert('string' === typeof o.params[o.subroutine], 'subroutine not found!');
+        o.path = o.params[o.subroutine];
+        if (o.path[0] != '/') o.path = '/' + o.path;
+        delete o.params[o.subroutine];
+        delete o.subroutine;
+
+        // nesting match will add a count on the route counter
+        // but it is not really routed, so -1 to fix the counter
+        req.routed--;
+        
+        return [o, req, ...args];
+    }
+    // @overwrite switcher
+    _execute (result, o, req, ...args) {
+        req.params = $.cloneDeep(o.params);
+        return result(req, ...args);
+    }
+    configure (options = {}) {
+        debug('configuring ...');
+        assert(options instanceof Object, 'Options must be an object!');
+
+        this._config          = this._config instanceof Object ? this._config : $.cloneDeep(Router.defaultConfig);
+        assert(this._config instanceof Object, 'Internal Error');
+
+        if (!Array.isArray(options.methods) || options.methods.length <= 0) {
+            options.methods = methods;
+        }
+
+        this._config          = extend(true, this._config, options);
+        assert(Array.isArray(this._config.methods), 'Methods must be an array!');
+
+        this._httpMethods     = $.cloneDeep(this._config.methods).map(o => o.toLowerCase());
+        this._specialMethods  = ['all', 'routed', 'other'];
+        this._methods         = $.cloneDeep(this._httpMethods).concat($.cloneDeep(this._specialMethods));
+
+        this.bindMethods();
+
+        return this;
+    }
+    get methods () {
+        return $.cloneDeep(this._methods);
+    }
+    get subroutine () {
+        return this._config.subroutine || 'subroutine';
+    }
+    route (method, pathexp, handler) {
+        debug('setting route for [' + method + '] [' + pathexp + '] ...');
+        assert('string' === typeof method, 'Method must be a string!');
+        method = method.toLowerCase();
+        assert(this._methods.includes(method), 'Invalid Method!');
+        assert('string' === typeof pathexp || pathexp instanceof RegExp, 'Path expression must be a string or a Regular Expression!');
+
+        let nesting = false;
+        if (handler instanceof Router) {
+            handler = handler._switcher;
+            nesting = true;
+            if (this._config['nesting-path-auto-complete'] && !(pathexp instanceof RegExp)) {
+                if (!pathexp.endsWith('/')) pathexp += '/';
+                pathexp += `:${this.subroutine}*`;
+            }
+        }
+        const regexp = path2regexp(pathexp);
+        return this._switcher.case({ method, pathexp, regexp, nesting }, handler, { break: false });
+    }
+    routes () {
+        return (req, ...args) => {
+            assert('string' === typeof req.url, 'URL must be a string');
+            assert('string' === typeof req.method, 'METHOD must be a string');
+            debug(`routing ${req.method.toUpperCase()} ${req.url} ...`);
+            const o = {
+                path: decodeURIComponent(req.url.split('?')[0]),
+                method: req.method.toLowerCase(),
+                params: {}
+            };
+            assert(this._httpMethods.includes(o.method), 'Invalid METHOD [' + req.method + ']');
+
+            req.routed = 0;
+
+            return this._switcher.dispatch(o, req, ...args).catch(e => {
+                this.emit('error', e, req, ...args);
+            });
         }
     }
-    static create (options) {
-        debug('Router: Router.create');
-        return new Router(options);
+    clear () {
+        debug('clearing ...');
+        let method = null;
+        while (method = this._enabledMethods.pop()) {
+            delete this[method];
+        }
+        this._switcher._cases = [];
+        return this;
     }
-    load (root, prefix) {
-        debug('Router: loading by root path ' + root);
-        if ('string' !== typeof root) {
-            throw new Error('Router loading root path is not a string');
-        }
-
-        root = path.normalize(root);
-
-        if (!path.isAbsolute(root)) {
-            debug('Router: root is not absolute, make an absolute one');
-            root = path.join(path.dirname(caller()), root);
-        }
-
-        if (prefix) {
-            prefix = path.normalize(prefix);
-            if (!prefix || !prefix[0] || prefix[0] === '.') {
-                throw new Error('Invalid router prefix ' + prefix);
-            } else if(os.platform().startsWith("win")) {
-                prefix.replace(/\\/g,"/");
+    bindMethods () {
+        debug('binding methods [' + $.truncate(this.methods.join(', '), 20) + '](' + this.methods.length + ' methods) ...');
+        this.clear();
+        for (let item of this.methods) {
+            const Method = item[0].toUpperCase() + item.slice(1).toLowerCase();
+            const method = Method.toLowerCase();
+            const METHOD = Method.toUpperCase();
+            this[method] = this[Method] = this[METHOD] = (pathexp, handler) => {
+                return this.route(method, pathexp, handler);
             }
-            debug('Router: create a new Router to load with prefix ' + prefix);
-            const opts = extend(true, {}, this.opts);
-            opts.routePrefix = opts.routePrefix || '';
-            opts.routePrefix += prefix;
-            const router = Router.create(opts).load(root);
-            debug('Router: using the router with prefix ' + prefix);
-            this.use(prefix, router.routes());
-            return this;
+            this._enabledMethods.push(method, Method, METHOD);
         }
-
-        debug('Router; loading by directory structure of ' + root); 
-
-        /**
-         * First load all files, then load directories recrusively
-         **/
-        const dirlist   = [];
-        const filelist  = [];
-        const list      = fs.readdirSync(root);
-        for (const filename of list) {
-            let routePath = name2routePath(filename, this.options);
-            if (routePath === false) {
-                continue;
+    }
+    load (filename) {
+        assert('string' === typeof filename, 'File name must be a string!');
+        debug('loading router by path ...');
+        filename = path.normalize(filename).replace(/\\/g, '/');
+        if (!path.isAbsolute(filename)) {
+            const rootDirectory = path.dirname(process.mainModule.filename);
+            filename = path.join(rootDirectory, filename);
+        }
+        assert(path.isAbsolute(filename), 'File path must be or can be converted into an absolute path!');
+        debug('path is ' + filename);
+        const stat = fs.statSync(filename);
+        if (stat.isFile()) {
+            debug('loading router by file ...');
+            const filemodule = require(filename);
+            assert(filemodule instanceof Function || filemodule instanceof Object, 'File as router should export a Function or an Object!');
+            if (filemodule instanceof Function) {
+                debug('file module is a function');
+                const router = filemodule(this) || this;
+                assert(router instanceof Router, 'Function as router should return a Router or null');
+                if (router !== this) {
+                    this.all('/', router);
+                }
             }
-            routePath = '/' + routePath;
-            const item = { filename, routePath };
-            const absolutePath = path.join(root, filename);
-            const stat = fs.statSync(absolutePath);
-            if (stat.isDirectory()) {
-                dirlist.push(item);
-            }
-            else if (stat.isFile()) {
-                filelist.push(item);
+            else {
+                debug('file module is an object');
+                for (let method in filemodule) {
+                    this.route(method, '/', filemodule[method]);
+                }
             }
         }
-        for (const item of filelist) {
-            loadRouteByFilename(this, item.filename, item.routePath, root);
-        }
-        for (const item of dirlist) {
-            this.load(path.join(root, item.filename), item.routePath);
+        else {
+            debug('loading router by directory ...');
+            const files = fs.readdirSync(filename);
+            for (let file of files) {
+                const filepath = path.join(filename, file);
+                const router = new Router();
+                router.adapter = this.adapter;
+                router.load(filepath);
+                file = path.basename(file, path.extname(file));
+                const prefix = this.adapter.parseFileName(file) || file;
+                this.all('/' + prefix, router);
+            }
         }
         return this;
     }
 }
 
-function name2routePath (name, options) {
-    debug('Router: convert name to route path : ' + name);
-    if ('string' !== typeof name) {
-        throw new Error('Name must be a string');
-    }
-    if (name === (options.default || 'index.js')) {
-        return '';
-    }
-    const extname = path.extname(name);
-    if (extname && extname !== '.js') {
-        return false;
-    }
-    name = path.basename(name, extname);
-    if (!name || name[0] === '.') {
-        return false;
-    }
-
-    const prefix = options.param_prefix || '_';
-    const prefix_esc = escapeRegexp(prefix);
-
-    let routePath = name.replace(new RegExp("^" + prefix_esc + "(?!(" + prefix_esc + ")|$)"), ":")
-                        .replace(new RegExp("^" + prefix_esc + prefix_esc), prefix);
-
-    debug('Router: convert result is ' + routePath);
-    return routePath;
+const defaultConfig = {
+    max: 0,                               // max routed limit, 0 refers to unlimited
+    methods: methods,                     // methods to support
+    subroutine: 'subroutine',             // subroutine param name for router's nesting
+    'nesting-path-auto-complete': true,   // whether if auto complete the route path for nesting routes
 }
 
-function loadRouteByFilename (router, filename, routePath, root) {
-    if ('string' !== typeof filename || 'string' !== typeof root) {
-        throw new Error('Invalid param to load by dirname');
+function defaultParseFileName (filename) {
+    let name = filename;
+    const PARAM    = '.as.param';
+    const ASTERISK = '.as.asterisk';
+    if (filename.endsWith(PARAM)) {
+        name = ':' + filename.slice(0, filename.length - PARAM.length);
     }
-    debug('Router: loading file ' + filename);
-    if (path.extname(filename) !== '.js' || filename.length <= 3) {
-        return;
+    else if (filename.endsWith(ASTERISK)) {
+        name = ':' + filename.slice(0, filename.length - ASTERISK.length) + '*';
     }
-
-    debug("Router: route path [" + routePath + "]");
-    const absolutePath = path.join(root, filename);
-    //import fileModule from absolutePath;
-    let fileModule = require(absolutePath).default || require(absolutePath);
-
-    if (fileModule instanceof Function) {
-        debug("Router: module is a function, use it to handle router directly");
-        let subRouter = Router.create(router.opts);
-        let result = fileModule(subRouter);
-        if (result instanceof Router) {
-            subRouter = result;
-        }
-        router.use(routePath, subRouter.routes());
-    }
-    else if (fileModule instanceof Object) {
-        loadByModule(router, routePath, fileModule);
-    }
-    else {
-        throw new Error('Invalid router module');
-    }
+    return name;
 }
 
-function loadByModule (router, routePath, module) {
-    debug("Router: load route by module");
-
-    //handle redirect routes
-    for (const method_ori in module) {
-        const METHOD = method_ori.toUpperCase();
-        if (METHOD !== 'REDIRECT' || 'string' !== typeof module[method_ori]) {
-            continue;
-        }
-
-        const desc = METHOD + ' ' + (router.opts.routePrefix || '') + routePath;
-        debug("Router: add router " + chalk.yellow(desc + " => " + module[method_ori]));
-        router.redirect(routePath, module[method_ori]);
-        return;
-    }
-
-    //handle methods
-    for (const method_ori in module) {
-        const method = method_ori.toLowerCase();
-        const METHOD = method_ori.toUpperCase();
-
-        const desc = METHOD + ' ' + (router.opts.routePrefix || '') + routePath;
-
-        if (!(module[method_ori] instanceof Function) || router.methods.indexOf(METHOD) < 0) {
-            continue;
-        }
-        debug("Router: add router " + chalk.yellow(desc));
-
-        router[method](routePath, module[method_ori]);
-    }
-}
-
-export default Router;
-
-debug('Router: load ok');
+debug('loaded!');
+module.exports = Router;
