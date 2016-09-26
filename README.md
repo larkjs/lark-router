@@ -137,6 +137,15 @@ module.exports = {
 
 _Some methods (eg. delete) are reserved words, so we recommend words capitalized or in upper case, like `GET`, `Post`_
 
+### Loading directories with file name as param
+
+You may still want to use routes like `/:foo/:bar` in loading directories model. We have provide an adapter to do this. `router.adapter.parseFileName` will parse all file/directory names(without extend name) in the loading process. We provid a default one:
+
+```
+/foo.as.param/bar.as.param.js  =>  /:foo/:bar
+/foo/bar.as.asterisk.js        =>  /foo/:bar*
+```
+
 ## DETAILED DOC
 TBD...
   
