@@ -253,11 +253,20 @@ function defaultParseFileName (filename) {
     let name = filename;
     const PARAM    = '.as.param';
     const ASTERISK = '.as.asterisk';
-    if (filename.endsWith(PARAM)) {
-        name = ':' + filename.slice(0, filename.length - PARAM.length);
-    }
-    else if (filename.endsWith(ASTERISK)) {
-        name = ':' + filename.slice(0, filename.length - ASTERISK.length) + '*';
+    const INDEX    = '.as.index';
+
+    switch (true) {
+        case filename.endsWith(PARAM) :
+            name = ':' + filename.slice(0, filename.length - PARAM.length);
+            break;
+        case filename.endsWith(ASTERISK) :
+            name = ':' + filename.slice(0, filename.length - ASTERISK.length) + '*';
+            break;
+        case filename.endsWith(INDEX) :
+            name = '/';
+            break;
+        default :
+            break;
     }
     return name;
 }
