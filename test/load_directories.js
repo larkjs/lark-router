@@ -33,6 +33,12 @@ describe('route with directories for koa apps', () => {
             .end(done);
     });
 
+    it('should response 200 for GET /, route as ALL / -> GET /', done => {
+        request(app).get('/')
+            .expect(200, 'main')
+            .end(done);
+    });
+
     it('should response 200 for GET /home/haohao, route as ALL /home -> GET /:name', done => {
         request(app).get('/home/haohao')
             .expect(200, 'Welcome home, haohao\n')
