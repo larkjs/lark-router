@@ -136,8 +136,8 @@ class Router extends EventEmitter {
         return this._config.subroutine || 'subroutine';
     }
     route (method, pathexp, handler) {
-        debug('setting route for [' + method + '] [' + pathexp + '] ...');
         assert('string' === typeof method, 'Method must be a string!');
+        debug('setting route for [' + method.toUpperCase() + '] [' + pathexp + '] ...');
         method = method.toLowerCase();
         assert(this._methods.includes(method), 'Invalid Method!');
         assert('string' === typeof pathexp || pathexp instanceof RegExp, 'Path expression must be a string or a Regular Expression!');
