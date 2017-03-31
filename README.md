@@ -101,6 +101,7 @@ For async processors, return promises.
 
 ```
 router.get('/', () => new Promise(...));
+router.get('/foo', async () => { ... });
 ```
 
 ## Loading files and directories to generate route rules
