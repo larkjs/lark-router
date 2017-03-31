@@ -170,7 +170,7 @@ class Router extends EventEmitter {
 
             return this._switcher.dispatch(o, req, ...args).catch(e => {
                 this.emit('error', e, req, ...args);
-                throw e;
+                // throw e;
             });
         }
     }
