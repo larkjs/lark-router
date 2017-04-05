@@ -84,17 +84,6 @@ You could nest routers together:
 mainRouter.all('/api', apiRouter);
 ```
 
-_Note that Lark-Router uses a path param to pass the unmatched part of path. That param name can be configured, usually is `subroutine`, and a string `'/:subroutine*'` will be append to that expression automatically._
-
-```
-mainRouter.configure({
-    'subroutine': 'sub',
-    'nesting-path-auto-complete': false,
-});
-
-mainRouter.all('/api/:sub*', api); // equivalent to the example above.
-```
-
 ## Async processors
 
 For async processors, return promises.
@@ -102,53 +91,6 @@ For async processors, return promises.
 ```
 router.get('/', () => new Promise(...));
 router.get('/foo', async () => { ... });
-```
-
-## Loading files and directories to generate route rules
-
-Use `router.load(path)` to load a file or a directory.
-
-If the `path` is a file, it should export a function or an object.
-
-* function
-The function accepts the router as parameter.
-
-```javascript
-module.exports = router => {
-    router.get('/foo/bar', (...args) => {...});
-}
-```
-
-Or you can return a new one if you like, but this is not recommended since you may need to re-configure this sub-router, eg. setting a adapter for this router.
-
-```javascript
-module.exports = () => {
-    const router = new LarkRouter();
-    router.get('/foo/bar', (...args) => {...});
-    return router;
-}
-```
-
-* Object
-If an object is exported, all the properties of the object with name in the `router.methods` should be a function and will be processed as `router.route(key, value)`.
-
-```javascript
-module.exports = {
-    GET  (ctx, next) => {...}
-    POST (ctx, next) => {...}
-}
-```
-
-_Some methods (eg. delete) are reserved words, so we recommend words capitalized or in upper case, like `GET`, `Post`_
-
-### Loading directories with file name as param
-
-You may still want to use routes like `/:foo/:bar` in loading directories model. We have provide an adapter to do this. `router.adapter.parseFileName` will parse all file/directory names(without extend name) in the loading process. We provid a default one:
-
-```
-/main.as.index.js              =>  /
-/foo.as.param/bar.as.param.js  =>  /:foo/:bar
-/foo/bar.as.asterisk.js        =>  /foo/:bar*
 ```
   
 [npm-image]: https://img.shields.io/npm/v/lark-router.svg?style=flat-square
