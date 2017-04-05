@@ -1,8 +1,8 @@
 {
   "name": "lark-router",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "description": "An koa route initialization and configuration module.",
-  "main": "index.js",
+  "main": "./lib/Router.js",
   "engines": {
     "node": ">=7.6"
   },
@@ -25,9 +25,7 @@
   },
   "homepage": "https://github.com/larkjs/lark-router",
   "dependencies": {
-    "debug": "^2.2.0",
     "extend": "^3.0.0",
-    "lodash": "^4.15.0",
     "methods": "^1.1.2",
     "path-to-regexp": "^1.5.3",
     "switch-case": "^0.4.0"
@@ -35,7 +33,7 @@
   "devDependencies": {
     "eslint": "^3.18.0",
     "istanbul": "^1.1.0-alpha.1",
-    "koa": "^2.0.0-alpha.6",
+    "koa": "^2.0.0-alpha.8",
     "lodash": "^4.16.2",
     "mocha": "~2.0.1",
     "should": "~4.3.0",
