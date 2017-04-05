@@ -37,7 +37,10 @@ http.createServer(router.routes()).listen(3000);
 const router = new LarkRouter();
 const app    = new Koa();
 
-router.get('/foo/bar', (ctx, next) => ctx.body = '/foo/bar requested!');
+router.get('/foo/bar', async (ctx, next) => {
+    ctx.body = '/foo/bar requested!';
+    await next();
+});
 router.on('error', (error, ctx, next) => {
     ctx.statusCode = 500;
     ctx.body = error.message;
