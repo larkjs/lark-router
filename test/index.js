@@ -7,8 +7,10 @@ const agent = require('supertest');
 
 const Router = require('..');
 const app = require('../example/app');
+const httpApp = require('../example/http');
 
 const request = agent(app);
+const http = agent(httpApp);
 
 describe('lark router app', () => {
     it('should response 404 for not found url', (done) => {
@@ -74,5 +76,13 @@ describe('start a router with undefined method', () => {
         }
         error.should.be.an.instanceof(Error);
         done();
+    });
+});
+
+describe('route with an http server', () => {
+    it('should response 200 for get /hello/haohao', (done) => {
+        http.get('/hello/haohao')
+            .expect(200)
+            .expect('Hello, haohao!', done);
     });
 });
