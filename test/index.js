@@ -80,7 +80,7 @@ describe('start a router with undefined method', () => {
 });
 
 describe('route with an http server', () => {
-    it('should response 200 for get /hello/haohao', (done) => {
+    it('should response 200 for get /hello//haohao', (done) => {
         http.get('/hello/haohao')
             .expect(200)
             .expect('Hello, haohao!', done);
