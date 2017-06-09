@@ -1,6 +1,6 @@
 {
   "name": "lark-router",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "An koa route initialization and configuration module.",
   "main": "./lib/Router.js",
   "engines": {
