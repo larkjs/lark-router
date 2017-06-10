@@ -28,7 +28,7 @@
     "extend": "^3.0.0",
     "methods": "^1.1.2",
     "path-to-regexp": "^1.5.3",
-    "switch-case": "^0.4.0",
+    "switch-case": "^1.0.1",
     "vi-misc": "^1.4.0"
   },
   "devDependencies": {
