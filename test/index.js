@@ -4,10 +4,11 @@
 'use strict';
 
 const agent = require('supertest');
+const methods = require('lark-router/lib/methods');
 
-const Router = require('..');
-const app = require('../example/app');
-const httpApp = require('../example/http');
+const Router = require('lark-router');
+const app = require('lark-router/example');
+const httpApp = require('lark-router/example/http');
 
 const request = agent(app);
 const http = agent(httpApp);
@@ -17,6 +18,17 @@ describe('lark router app', () => {
         request.get('/404/not/found')
             .expect(404)
             .end(done);
+    });
+
+    it('should response 404 for method not supported', (done) => {
+        const requestMethods = methods.request;
+        methods.request = [];
+        request.get('/home/haohao')
+            .expect(404)
+            .end(error => {
+                methods.request = requestMethods;
+                done(error);
+            });
     });
 
     it('should response 200 for get /home/haohao', (done) => {

@@ -1,11 +1,11 @@
 /**
- * Test for lark router
+ * The example of using lark-router on a Koa App
  **/
 'use strict';
 process.mainModule = module;
 
 const Koa     = require('koa');
-const Router  = require('..');
+const Router  = require('lark-router');
 
 const router = new Router();
 
@@ -17,6 +17,24 @@ router.post('/home/:name/:action', async (ctx, next) => {
     ctx.body = `You have posted an action "${ctx.params.action}" to ${ctx.params.name}`;
     await next();
 });
+/*
+router.get('/home1/:name/:action', async (ctx, next) => {
+    ctx.body = `You have posted an action "${ctx.params.action}" to ${ctx.params.name}`;
+    await next();
+});
+router.get('/home2/:name/:action', async (ctx, next) => {
+    ctx.body = `You have posted an action "${ctx.params.action}" to ${ctx.params.name}`;
+    await next();
+});
+router.get('/home3/:name/:action', async (ctx, next) => {
+    ctx.body = `You have posted an action "${ctx.params.action}" to ${ctx.params.name}`;
+    await next();
+});
+router.post('/home4/:name/:action', async (ctx, next) => {
+    ctx.body = `You have posted an action "${ctx.params.action}" to ${ctx.params.name}`;
+    await next();
+});
+*/
 
 const router2 = new Router();
 router2.get('/foo/:bar', async (ctx, next) => {

@@ -7,8 +7,11 @@
     "node": ">=7.6"
   },
   "scripts": {
-    "test": "./node_modules/.bin/eslint example/** lib/** && ./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha -- --require should --recursive test",
-    "debug": "node --inspect-brk=9229 example/app.js"
+    "lint": "./node_modules/.bin/eslint index.js example/** lib/**",
+    "pretest": "npm run lint && npm link && npm link lark-router",
+    "test": "./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha -- --require should --recursive test",
+    "posttest": "npm unlink",
+    "debug": "node --inspect-brk=9229 example/index.js"
   },
   "repository": {
     "type": "git",
@@ -25,14 +28,15 @@
   },
   "homepage": "https://github.com/larkjs/lark-router",
   "dependencies": {
+    "debug": "^2.6.8",
     "extend": "^3.0.0",
     "methods": "^1.1.2",
     "path-to-regexp": "^1.5.3",
-    "switch-case": "^1.0.1",
-    "vi-misc": "^1.4.0"
+    "switch-case": "^1.0.1"
   },
   "devDependencies": {
     "eslint": "^3.18.0",
+    "eslint-plugin-spellcheck": "0.0.8",
     "istanbul": "^1.1.0-alpha.1",
     "koa": "^2.0.0-alpha.8",
     "lodash": "^4.16.2",
