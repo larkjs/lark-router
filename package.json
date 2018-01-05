@@ -1,17 +1,17 @@
 {
   "name": "lark-router",
-  "version": "2.2.1",
+  "version": "2.3.0",
   "description": "An koa route initialization and configuration module.",
-  "main": "./lib/Router.js",
   "engines": {
-    "node": ">=7.6"
+    "node": ">=8.9"
   },
   "scripts": {
-    "lint": "./node_modules/.bin/eslint index.js example/** lib/**",
-    "pretest": "npm run lint && npm link && npm link lark-router",
+    "lint": "./node_modules/.bin/eslint index.js index.js src/**",
+    "test:clear-env": "npm unlink lark-router && npm unlink && npm install",
+    "test:prepare-env": "npm link && npm link lark-router",
+    "pretest": "npm run test:clear-env && npm run lint && npm run test:prepare-env",
     "test": "./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha -- --require should --recursive test",
-    "posttest": "npm unlink",
-    "debug": "node --inspect-brk=9229 example/index.js"
+    "posttest": "npm run test:clear-env"
   },
   "repository": {
     "type": "git",
@@ -28,20 +28,20 @@
   },
   "homepage": "https://github.com/larkjs/lark-router",
   "dependencies": {
-    "debug": "^2.6.8",
-    "extend": "^3.0.0",
+    "debug": "^3.1.0",
+    "lodash": "^4.17.4",
     "methods": "^1.1.2",
-    "path-to-regexp": "^1.5.3",
-    "switch-case": "^1.0.1"
+    "path-to-regexp": "^2.1.0",
+    "switch-case": "^2.1.4",
+    "vi-misc": "^1.13.2"
   },
   "devDependencies": {
-    "eslint": "^3.18.0",
+    "eslint": "^4.14.0",
     "eslint-plugin-spellcheck": "0.0.8",
     "istanbul": "^1.1.0-alpha.1",
-    "koa": "^2.0.0-alpha.8",
-    "lodash": "^4.16.2",
-    "mocha": "~2.0.1",
-    "should": "~4.3.0",
-    "supertest": "^2.0.0"
+    "koa": "^2.4.1",
+    "mocha": "^3.4.2",
+    "should": "^11.2.1",
+    "supertest": "^3.0.0"
   }
 }
