@@ -7,7 +7,6 @@ Router for lark based on koa 2.0
 [![build status][travis-image]][travis-url]
 [![Test coverage][coveralls-image]][coveralls-url]
 [![NPM downloads][downloads-image]][npm-url]
-[![Node.js dependencies][david-image]][david-url]
   
 ## Install
 
@@ -101,7 +100,5 @@ router.get('/foo', async () => { ... });
 [travis-image]: https://img.shields.io/travis/larkjs/lark-router/master.svg?style=flat-square
 [travis-url]: https://travis-ci.org/larkjs/lark-router
 [downloads-image]: https://img.shields.io/npm/dm/lark-router.svg?style=flat-square
-[david-image]: https://img.shields.io/david/larkjs/lark-router.svg?style=flat-square
-[david-url]: https://david-dm.org/larkjs/lark-router
 [coveralls-image]: https://img.shields.io/codecov/c/github/larkjs/lark-router.svg?style=flat-square
 [coveralls-url]: https://codecov.io/github/larkjs/lark-router
