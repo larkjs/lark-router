@@ -48,7 +48,7 @@ const proxy = {
             return false;
         }
 
-        const result = route.regexp.exec(input.request.path);
+        const result = route.regexp.exec(input.request.url);
         if (!result) {
             return false;
         }
@@ -86,7 +86,7 @@ const proxy = {
         request = {
             request: {
                 method: request.method,
-                path:   request.path.slice(context.matched.length),
+                url:    request.url.slice(context.matched.length),
             }, args, routed, params,
         };
         return await handler._switcher.dispatch(request);

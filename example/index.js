@@ -36,13 +36,21 @@ router.get('/my/name/is/:name', async (ctx) => {
 });
 
 /**
- * Params with regexp
+ * Params with regexp as params type
  **/
-let a, b;
-router.get('/what/is/the/answer/of/:numberA(\\d+)/plus/:numberB(\\d+)', async (ctx) => {
-    a = parseInt(ctx.params.numberA, 10);
-    b = parseInt(ctx.params.numberB, 10);
+router.get('/what/is/the/answer/of/:numberA(-?\\d+)/plus/:numberB(-?\\d+)', async (ctx) => {
+    let a = parseInt(ctx.params.numberA, 10);
+    let b = parseInt(ctx.params.numberB, 10);
     ctx.body = `The answer is ${a + b}`;
+});
+
+/**
+ * Use regexp directly
+ **/
+router.get(/^\/([a-zA-Z]*)\/is\/(\d+)$/, async (ctx) => {
+    let name = ctx.params[0];
+    let age = ctx.params[1];
+    ctx.body = `${name} is ${age} years old`;
 });
 
 /**
@@ -67,9 +75,6 @@ nextRouter.get('/she/is/(\\d+)', async (ctx) => {
 });
 
 router.get('/he/is/(\\d+)/and', nextRouter);
-router.routed('/he/is/(\\d+)/and/s*', async (ctx) => {
-    ctx.body += '[MARKED AS ROUTED]';
-});
 
 /**
  * Special methods
@@ -77,14 +82,15 @@ router.routed('/he/is/(\\d+)/and/s*', async (ctx) => {
 router.get('/foo/bar', async (ctx) => {
     ctx.body = '[GET]';
 });
-router.routed('/foo/*', async (ctx) => {
+router.routed('/foo/:rest*', async (ctx) => {
     ctx.body += '[MARKED AS ROUTED]';
 });
-router.other('/foo/*', async (ctx) => {
+router.other('/foo/:rest*', async (ctx) => {
     ctx.body = '[MARKED AS NOT ROUTED]';
 });
-router.all('*', async (ctx, next) => await next());
-
-app.use(router.routes()).listen(3000);
+router.all(/.*/, async (ctx) => {});
 
 app.on('error', error => console.log(error.stack));
+
+module.exports = app.use(router.routes()).listen(3001);
+

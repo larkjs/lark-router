@@ -70,7 +70,7 @@ router.all('/foo/bar', handler);  // ===> response to GET/POST/DELETE/...  /foo/
 * other: match all unmatched requests
 
 ```
-router.other('*', response404notfound); // ===> response to GET/POST/DELETE/...  /foo/bar if no other route matched
+router.other(/.*/, response404notfound); // ===> response to GET/POST/DELETE/...  /foo/bar if no other route matched
 ```
 
 * routed: match all matched requests

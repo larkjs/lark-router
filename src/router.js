@@ -22,8 +22,9 @@ class Router {
      * }
      **/
     constructor(options = {}) {
+        debug('construct');
         assert(options instanceof Object, 'Invalid options');
-        const requestMethods = options.methods || methods.request;
+        const requestMethods = [...methods.request].concat(Array.isArray(options.methods) ? options.methods : []);
         assert(Array.isArray(requestMethods), 'Preset request methods muse be an array');
         this._methods = {
             request: requestMethods.map(method => method.toUpperCase()),
@@ -62,11 +63,11 @@ class Router {
         return async (...args) => {
             let request = args.length > 0 ? args[0] : {};
             assert(request instanceof Object, 'Invalid request, should be an object');
-            request = _.pick(request, 'method', 'path');
-            assert('string' === typeof request.method && 'string' === typeof request.path,
-                'Invalid type of request method/path, should be a string');
-            request.path = decodeURIComponent(request.path);
-            debug(`routing ${request.method} ${request.path}`);
+            request = _.pick(request, 'method', 'url');
+            assert('string' === typeof request.method && 'string' === typeof request.url,
+                'Invalid type of request method or url, should be a string');
+            request.url = decodeURIComponent(request.url);
+            debug(`routing ${request.method} ${request.url}`);
 
             /**
              * request: the request info for routing
